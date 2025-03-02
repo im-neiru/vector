@@ -19,28 +19,26 @@ impl Error {
     {
         let message = self.into_error_message();
 
-        if MessageDialog::new()
+        MessageDialog::new()
             .set_title(message.title)
             .set_text(message.text.as_ref())
             .set_owner(owner)
             .show_alert()
-            .is_err()
-        {
-            panic!("Fatal Error: {}", message.text);
-        }
+            .ok();
+
+        panic!("Fatal Error: {}", message.text);
     }
 
     pub(crate) fn show_no_owner(self) {
         let message = self.into_error_message();
 
-        if MessageDialog::new()
+        MessageDialog::new()
             .set_title(message.title)
             .set_text(message.text.as_ref())
             .show_alert()
-            .is_err()
-        {
-            panic!("Fatal Error: {}", message.text);
-        }
+            .ok();
+
+        panic!("Fatal Error: {}", message.text);
     }
 
     fn into_error_message(self) -> ErrorMessage {
