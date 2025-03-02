@@ -4,6 +4,7 @@ use winit::error::{EventLoopError, OsError};
 
 pub(crate) enum Error {
     EventLoopError(EventLoopError),
+    WindowCreationFailed(OsError),
 }
 
 struct ErrorMessage {
@@ -55,12 +56,12 @@ impl Error {
                     }
                     EventLoopError::Os(os_error) => {
                         format!(
-                            "An operating system error occurred during window initialization: {:?}.",
+                            "An operating system error occurred during window initialization: {}.",
                             os_error
                         )
                     }
                     EventLoopError::RecreationAttempt => {
-                        "Attempted to re-create an already running event loop. Please ensure that the event loop is only initialized once.".to_string()
+                        "Attempted to re-create an already running event loop.".to_string()
                     }
                     EventLoopError::ExitFailure(code) => {
                         format!("The application encountered an exit error with code: {}.", code)
@@ -72,6 +73,15 @@ impl Error {
                     text: text.into_boxed_str(),
                 }
             }
+            Self::WindowCreationFailed(os_error) => ErrorMessage {
+                title: "Vector: Window Creation Failed",
+                text: format!(
+                    "An error occurred while attempting to create a new window. The operating system reported: {}.",
+                    os_error
+                )
+                .into_boxed_str(),
+            },
+
         }
     }
 }
