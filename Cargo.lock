@@ -1273,6 +1273,7 @@ name = "vector"
 version = "0.1.0"
 dependencies = [
  "native-dialog",
+ "raw-window-handle 0.5.2",
  "winit",
 ]
 
