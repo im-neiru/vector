@@ -3,5 +3,5 @@ mod error;
 mod window_state;
 
 fn main() {
-    app::App::default().run();
+    throw!(app::App::default().run());
 }

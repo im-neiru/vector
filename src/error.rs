@@ -1,6 +1,6 @@
 use native_dialog::MessageDialog;
 use raw_window_handle::{HasRawWindowHandle, HasWindowHandle};
-use winit::error::EventLoopError;
+use winit::error::{EventLoopError, OsError};
 
 pub(crate) enum Error {
     EventLoopError(EventLoopError),
@@ -74,4 +74,33 @@ impl Error {
             }
         }
     }
+}
+
+impl From<EventLoopError> for Error {
+    #[inline(always)]
+    fn from(value: EventLoopError) -> Self {
+        Self::EventLoopError(value)
+    }
+}
+
+#[macro_export]
+macro_rules! throw {
+    ($expr:expr) => {{
+        match $expr {
+            Ok(val) => val,
+            Err(err) => {
+                $crate::error::Error::from(err).show_no_owner();
+                return;
+            }
+        }
+    }};
+    ($expr:expr, $owner:expr) => {{
+        match $expr {
+            Ok(val) => val,
+            Err(err) => {
+                $crate::error::Error::from(err).show_with_owner($owner);
+                return;
+            }
+        }
+    }};
 }

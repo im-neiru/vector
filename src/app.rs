@@ -45,8 +45,8 @@ impl ApplicationHandler for App {
 }
 
 impl App {
-    pub fn run(mut self) {
-        let ev = EventLoop::new().unwrap();
-        ev.run_app(&mut self).unwrap();
+    pub fn run(mut self) -> Result<(), winit::error::EventLoopError> {
+        let ev = EventLoop::new()?;
+        ev.run_app(&mut self)
     }
 }
