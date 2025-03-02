@@ -1,4 +1,5 @@
 mod app;
+mod error;
 mod window_state;
 
 fn main() {
