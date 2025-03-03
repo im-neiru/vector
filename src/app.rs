@@ -42,6 +42,9 @@ impl ApplicationHandler for App<'_> {
                 WindowAttributes::default()
                     .with_title("Vector")
                     .with_active(true)
+                    .with_min_inner_size(
+                        winit::dpi::PhysicalSize::new(800, 600),
+                    )
                     .with_maximized(true),
                 event_loop,
             ));
@@ -54,16 +57,28 @@ impl ApplicationHandler for App<'_> {
         window_id: winit::window::WindowId,
         event: winit::event::WindowEvent,
     ) {
-        if event == winit::event::WindowEvent::CloseRequested {
-            if let Some(state) = self.main_window.as_ref() {
-                if state.is_matched(window_id) {
-                    self.main_window = None;
-                }
+        use winit::event::WindowEvent::*;
 
-                if self.main_window.is_none() {
-                    event_loop.exit();
+        match event {
+            CloseRequested => {
+                if let Some(state) = self.main_window.as_ref() {
+                    if state.is_matched(window_id) {
+                        self.main_window = None;
+                    }
+
+                    if self.main_window.is_none() {
+                        event_loop.exit();
+                    }
                 }
             }
+            Resized(size) => {
+                if let Some(state) = self.main_window.as_mut() {
+                    if state.is_matched(window_id) {
+                        state.handle_resize(size);
+                    }
+                }
+            }
+            _ => (),
         }
     }
 }

@@ -39,7 +39,16 @@ impl WindowState<'_> {
         }
     }
 
+    #[inline(always)]
     pub(crate) fn is_matched(&self, id: WindowId) -> bool {
         self.window.id().eq(&id)
+    }
+
+    #[inline(always)]
+    pub(crate) fn handle_resize(
+        &mut self,
+        size: winit::dpi::PhysicalSize<u32>,
+    ) {
+        self.graphics.resize(size);
     }
 }
