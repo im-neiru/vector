@@ -1,12 +1,11 @@
-[package]
-name = "vector"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = ["crates/*"]
+resolver = "3"
 
-[dependencies]
+[workspace.dependencies]
 rwh_05 = { package = "raw-window-handle", version = "0.5.2" }
 rwh_06 = { package = "raw-window-handle", version = "0.6.2" }
-native-dialog = "0.7.0"
 winit = { version = "0.30.9", features = ["rwh_05"] }
+native-dialog = "0.7.0"
 wgpu = "24.0.1"
 pollster = "0.4.0"

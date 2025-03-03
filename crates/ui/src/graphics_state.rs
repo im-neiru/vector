@@ -8,7 +8,7 @@ pub struct GraphicsState<'a> {
 }
 
 impl GraphicsState<'_> {
-    pub(crate) async fn new(
+    pub async fn new(
         window: &winit::window::Window,
         instance: &wgpu::Instance,
     ) -> Result<Self, Error> {
@@ -84,7 +84,7 @@ impl GraphicsState<'_> {
         })
     }
 
-    pub(crate) fn resize(
+    pub fn resize(
         &mut self,
         size: winit::dpi::PhysicalSize<u32>,
     ) {
@@ -102,7 +102,7 @@ impl GraphicsState<'_> {
         self.surface.configure(&self.device, &self.config);
     }
 
-    pub(crate) fn draw(
+    pub fn draw(
         &mut self,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;

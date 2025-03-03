@@ -3,7 +3,7 @@ use rwh_05::HasRawWindowHandle;
 use wgpu::CreateSurfaceError;
 use winit::error::{EventLoopError, OsError};
 
-pub(crate) enum Error {
+pub enum Error {
     EventLoop(EventLoopError),
     WindowCreation(OsError),
     SurfaceCreation(CreateSurfaceError),
@@ -16,7 +16,7 @@ struct ErrorMessage {
 }
 
 impl Error {
-    pub(crate) fn show_with_owner<W>(self, owner: &W)
+    pub fn show_with_owner<W>(self, owner: &W)
     where
         W: HasRawWindowHandle,
     {
@@ -34,7 +34,7 @@ impl Error {
         panic!("Fatal Error: {}", message.text);
     }
 
-    pub(crate) fn show_no_owner(self) {
+    pub fn show_no_owner(self) {
         let message = self.into_error_message();
 
         MessageDialog::new()

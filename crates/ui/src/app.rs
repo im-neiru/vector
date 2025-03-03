@@ -12,7 +12,7 @@ pub struct App<'a> {
 }
 
 impl App<'_> {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             wgpu_instance: wgpu::Instance::new(
                 &wgpu::InstanceDescriptor {
@@ -26,7 +26,7 @@ impl App<'_> {
         }
     }
 
-    pub(crate) fn run(
+    pub fn run(
         mut self,
     ) -> Result<(), winit::error::EventLoopError> {
         let ev = EventLoop::new()?;

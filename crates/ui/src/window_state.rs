@@ -5,13 +5,13 @@ use winit::{
 
 use crate::graphics_state::GraphicsState;
 
-pub(crate) struct WindowState<'a> {
-    pub(crate) window: Window,
-    pub(crate) graphics: GraphicsState<'a>,
+pub struct WindowState<'a> {
+    pub window: Window,
+    pub graphics: GraphicsState<'a>,
 }
 
 impl WindowState<'_> {
-    pub(crate) fn new(
+    pub fn new(
         instance: &wgpu::Instance,
         window_attributes: WindowAttributes,
         event_loop: &ActiveEventLoop,
@@ -40,7 +40,7 @@ impl WindowState<'_> {
     }
 
     #[inline(always)]
-    pub(crate) fn is_matched(&self, id: WindowId) -> bool {
+    pub fn is_matched(&self, id: WindowId) -> bool {
         self.window.id().eq(&id)
     }
 }
