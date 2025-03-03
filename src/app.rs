@@ -1,6 +1,6 @@
 use winit::{
     application::ApplicationHandler,
-    event_loop::{ActiveEventLoop, EventLoop},
+    event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
     window::WindowAttributes,
 };
 
@@ -30,6 +30,7 @@ impl App<'_> {
         mut self,
     ) -> Result<(), winit::error::EventLoopError> {
         let ev = EventLoop::new()?;
+        ev.set_control_flow(ControlFlow::Wait);
         ev.run_app(&mut self)
     }
 }
@@ -74,7 +75,30 @@ impl ApplicationHandler for App<'_> {
             Resized(size) => {
                 if let Some(state) = self.main_window.as_mut() {
                     if state.is_matched(window_id) {
-                        state.handle_resize(size);
+                        state.graphics.resize(size);
+                    }
+                }
+            }
+            RedrawRequested => {
+                if let Some(state) = self.main_window.as_mut() {
+                    if state.is_matched(window_id) {
+                        if let Err(err) = state.graphics.draw()
+                        {
+                            use wgpu::SurfaceError::*;
+                            match err {
+                                Outdated | Lost => {
+                                    state.graphics.resize(
+                                        state
+                                            .window
+                                            .inner_size(),
+                                    );
+                                }
+                                OutOfMemory => {
+                                    event_loop.exit();
+                                }
+                                _ => (),
+                            }
+                        }
                     }
                 }
             }

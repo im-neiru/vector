@@ -6,8 +6,8 @@ use winit::{
 use crate::graphics_state::GraphicsState;
 
 pub(crate) struct WindowState<'a> {
-    window: Window,
-    graphics: GraphicsState<'a>,
+    pub(crate) window: Window,
+    pub(crate) graphics: GraphicsState<'a>,
 }
 
 impl WindowState<'_> {
@@ -42,13 +42,5 @@ impl WindowState<'_> {
     #[inline(always)]
     pub(crate) fn is_matched(&self, id: WindowId) -> bool {
         self.window.id().eq(&id)
-    }
-
-    #[inline(always)]
-    pub(crate) fn handle_resize(
-        &mut self,
-        size: winit::dpi::PhysicalSize<u32>,
-    ) {
-        self.graphics.resize(size);
     }
 }
