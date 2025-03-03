@@ -6,15 +6,39 @@ use winit::{
 
 use crate::window_state::WindowState;
 
-#[derive(Default)]
-pub struct App {
-    main_window: Option<WindowState>,
+pub struct App<'a> {
+    wgpu_instance: wgpu::Instance,
+    main_window: Option<WindowState<'a>>,
 }
 
-impl ApplicationHandler for App {
+impl App<'_> {
+    pub(crate) fn new() -> Self {
+        Self {
+            wgpu_instance: wgpu::Instance::new(
+                &wgpu::InstanceDescriptor {
+                    backends: wgpu::Backends::PRIMARY,
+                    flags: wgpu::InstanceFlags::default(),
+                    backend_options:
+                        wgpu::BackendOptions::default(),
+                },
+            ),
+            main_window: None,
+        }
+    }
+
+    pub(crate) fn run(
+        mut self,
+    ) -> Result<(), winit::error::EventLoopError> {
+        let ev = EventLoop::new()?;
+        ev.run_app(&mut self)
+    }
+}
+
+impl ApplicationHandler for App<'_> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.main_window.is_none() {
             self.main_window = Some(WindowState::new(
+                &self.wgpu_instance,
                 WindowAttributes::default()
                     .with_title("Vector")
                     .with_active(true)
@@ -41,12 +65,5 @@ impl ApplicationHandler for App {
                 }
             }
         }
-    }
-}
-
-impl App {
-    pub fn run(mut self) -> Result<(), winit::error::EventLoopError> {
-        let ev = EventLoop::new()?;
-        ev.run_app(&mut self)
     }
 }

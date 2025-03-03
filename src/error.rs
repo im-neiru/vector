@@ -1,10 +1,13 @@
 use native_dialog::MessageDialog;
-use raw_window_handle::{HasRawWindowHandle, HasWindowHandle};
+use rwh_05::HasRawWindowHandle;
+use wgpu::CreateSurfaceError;
 use winit::error::{EventLoopError, OsError};
 
 pub(crate) enum Error {
-    EventLoopError(EventLoopError),
-    WindowCreationFailed(OsError),
+    EventLoop(EventLoopError),
+    WindowCreation(OsError),
+    SurfaceCreation(CreateSurfaceError),
+    NoWgpuAdapter,
 }
 
 struct ErrorMessage {
@@ -15,16 +18,18 @@ struct ErrorMessage {
 impl Error {
     pub(crate) fn show_with_owner<W>(self, owner: &W)
     where
-        W: HasWindowHandle + HasRawWindowHandle,
+        W: HasRawWindowHandle,
     {
         let message = self.into_error_message();
 
-        MessageDialog::new()
-            .set_title(message.title)
-            .set_text(message.text.as_ref())
-            .set_owner(owner)
-            .show_alert()
-            .ok();
+        unsafe {
+            MessageDialog::new()
+                .set_title(message.title)
+                .set_text(message.text.as_ref())
+                .set_owner_handle(owner.raw_window_handle())
+                .show_alert()
+                .ok()
+        };
 
         panic!("Fatal Error: {}", message.text);
     }
@@ -43,7 +48,7 @@ impl Error {
 
     fn into_error_message(self) -> ErrorMessage {
         match self {
-            Self::EventLoopError(error) => {
+            Self::EventLoop(error) => {
                 let title = "Vector: Window Initialization Error";
                 let text = match error {
                     EventLoopError::NotSupported(details) => {
@@ -71,7 +76,7 @@ impl Error {
                     text: text.into_boxed_str(),
                 }
             }
-            Self::WindowCreationFailed(os_error) => ErrorMessage {
+            Self::WindowCreation(os_error) => ErrorMessage {
                 title: "Vector: Window Creation Failed",
                 text: format!(
                     "An error occurred while attempting to create a new window. The operating system reported: {}.",
@@ -79,7 +84,16 @@ impl Error {
                 )
                 .into_boxed_str(),
             },
-
+            Self::SurfaceCreation(create_surface_error) => ErrorMessage {
+                title: "Vector: WGPU Surface Creation Failed",
+                text: format!(
+                    "{}",
+                    create_surface_error
+                )
+                .into_boxed_str(),
+            },
+            Self::NoWgpuAdapter => ErrorMessage { title:  "Vector: Graphics initialization failed",
+            text: "Compataible WGPU Adapter not found".into() }
         }
     }
 }
@@ -87,7 +101,14 @@ impl Error {
 impl From<EventLoopError> for Error {
     #[inline(always)]
     fn from(value: EventLoopError) -> Self {
-        Self::EventLoopError(value)
+        Self::EventLoop(value)
+    }
+}
+
+impl From<CreateSurfaceError> for Error {
+    #[inline(always)]
+    fn from(value: CreateSurfaceError) -> Self {
+        Self::SurfaceCreation(value)
     }
 }
 
@@ -106,7 +127,8 @@ macro_rules! throw {
         match $expr {
             Ok(val) => val,
             Err(err) => {
-                $crate::error::Error::from(err).show_with_owner($owner);
+                $crate::error::Error::from(err)
+                    .show_with_owner($owner);
                 return;
             }
         }

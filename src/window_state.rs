@@ -3,16 +3,35 @@ use winit::{
     window::{Window, WindowAttributes, WindowId},
 };
 
-pub(crate) struct WindowState {
+use crate::graphics_state::GraphicsState;
+
+pub(crate) struct WindowState<'a> {
     window: Window,
+    graphics: GraphicsState<'a>,
 }
 
-impl WindowState {
-    pub(crate) fn new(window_attributes: WindowAttributes, event_loop: &ActiveEventLoop) -> Self {
+impl WindowState<'_> {
+    pub(crate) fn new(
+        instance: &wgpu::Instance,
+        window_attributes: WindowAttributes,
+        event_loop: &ActiveEventLoop,
+    ) -> Self {
         match event_loop.create_window(window_attributes) {
-            Ok(window) => Self { window },
+            Ok(window) => {
+                match pollster::block_on(GraphicsState::new(
+                    &window, instance,
+                )) {
+                    Ok(graphics) => Self { window, graphics },
+                    Err(error) => {
+                        error.show_with_owner(&window);
+                        unreachable!()
+                    }
+                }
+            }
             Err(os_error) => {
-                let error = crate::error::Error::WindowCreationFailed(os_error);
+                let error = crate::error::Error::WindowCreation(
+                    os_error,
+                );
 
                 error.show_no_owner();
                 unreachable!();
