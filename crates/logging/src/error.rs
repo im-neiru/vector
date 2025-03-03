@@ -1,136 +1,54 @@
-use native_dialog::MessageDialog;
-use rwh_05::HasRawWindowHandle;
-use wgpu::CreateSurfaceError;
-use winit::error::{EventLoopError, OsError};
+use std::panic::{Location, panic_any};
 
-pub enum Error {
-    EventLoop(EventLoopError),
-    WindowCreation(OsError),
-    SurfaceCreation(CreateSurfaceError),
+#[derive(Debug)]
+pub struct Error<'a> {
+    pub(crate) location: &'a Location<'a>,
+    pub(crate) kind: ErrorKind,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum ErrorKind {
+    #[error("Window create error: {0}")]
+    WindowCreation(winit::error::OsError),
+    #[error("Surface create error: {0}")]
+    CreateSurface(wgpu::CreateSurfaceError),
+    #[error("No compatible wgpu adapter found")]
     NoWgpuAdapter,
 }
 
-struct ErrorMessage {
-    title: &'static str,
-    text: Box<str>,
+pub type Result<T> =
+    std::result::Result<T, self::Error<'static>>;
+
+impl ErrorKind {
+    #[inline(always)]
+    #[track_caller]
+    pub fn into_error(self) -> self::Error<'static> {
+        Error {
+            location: Location::caller(),
+            kind: self,
+        }
+    }
+
+    #[inline(always)]
+    #[track_caller]
+    pub fn into_result<T>(self) -> self::Result<T> {
+        Err(Error {
+            location: Location::caller(),
+            kind: self,
+        })
+    }
 }
 
-impl Error {
-    pub fn show_with_owner<W>(self, owner: &W)
-    where
-        W: HasRawWindowHandle,
-    {
-        let message = self.into_error_message();
+pub trait UnwrapReport<T> {
+    fn unwrap_report(self) -> T;
+}
 
-        unsafe {
-            MessageDialog::new()
-                .set_title(message.title)
-                .set_text(message.text.as_ref())
-                .set_owner_handle(owner.raw_window_handle())
-                .show_alert()
-                .ok()
-        };
-
-        panic!("Fatal Error: {}", message.text);
-    }
-
-    pub fn show_no_owner(self) {
-        let message = self.into_error_message();
-
-        MessageDialog::new()
-            .set_title(message.title)
-            .set_text(message.text.as_ref())
-            .show_alert()
-            .ok();
-
-        panic!("Fatal Error: {}", message.text);
-    }
-
-    fn into_error_message(self) -> ErrorMessage {
+impl<T> UnwrapReport<T> for self::Result<T> {
+    #[inline(always)]
+    fn unwrap_report(self) -> T {
         match self {
-            Self::EventLoop(error) => {
-                let title = "Vector: Window Initialization Error";
-                let text = match error {
-                    EventLoopError::NotSupported(details) => {
-                        format!(
-                            "The current backend does not support this operation. Details: {}.",
-                            details
-                        )
-                    }
-                    EventLoopError::Os(os_error) => {
-                        format!(
-                            "An operating system error occurred during window initialization: {}.",
-                            os_error
-                        )
-                    }
-                    EventLoopError::RecreationAttempt => {
-                        "Attempted to re-create an already running event loop.".to_string()
-                    }
-                    EventLoopError::ExitFailure(code) => {
-                        format!("The application encountered an exit error with code: {}.", code)
-                    }
-                };
-
-                ErrorMessage {
-                    title,
-                    text: text.into_boxed_str(),
-                }
-            }
-            Self::WindowCreation(os_error) => ErrorMessage {
-                title: "Vector: Window Creation Failed",
-                text: format!(
-                    "An error occurred while attempting to create a new window. The operating system reported: {}.",
-                    os_error
-                )
-                .into_boxed_str(),
-            },
-            Self::SurfaceCreation(create_surface_error) => ErrorMessage {
-                title: "Vector: WGPU Surface Creation Failed",
-                text: format!(
-                    "{}",
-                    create_surface_error
-                )
-                .into_boxed_str(),
-            },
-            Self::NoWgpuAdapter => ErrorMessage { title:  "Vector: Graphics initialization failed",
-            text: "Compataible WGPU Adapter not found".into() }
+            Ok(value) => value,
+            Err(error) => panic_any(error),
         }
     }
-}
-
-impl From<EventLoopError> for Error {
-    #[inline(always)]
-    fn from(value: EventLoopError) -> Self {
-        Self::EventLoop(value)
-    }
-}
-
-impl From<CreateSurfaceError> for Error {
-    #[inline(always)]
-    fn from(value: CreateSurfaceError) -> Self {
-        Self::SurfaceCreation(value)
-    }
-}
-
-#[macro_export]
-macro_rules! throw {
-    ($expr:expr) => {{
-        match $expr {
-            Ok(val) => val,
-            Err(err) => {
-                $crate::error::Error::from(err).show_no_owner();
-                return;
-            }
-        }
-    }};
-    ($expr:expr, $owner:expr) => {{
-        match $expr {
-            Ok(val) => val,
-            Err(err) => {
-                $crate::error::Error::from(err)
-                    .show_with_owner($owner);
-                return;
-            }
-        }
-    }};
 }

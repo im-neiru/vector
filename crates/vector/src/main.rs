@@ -1,3 +1,3 @@
 fn main() {
-    // throw!(app::App::new().run());
+    ui::App::new().run().unwrap();
 }

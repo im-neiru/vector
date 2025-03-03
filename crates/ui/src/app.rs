@@ -1,3 +1,4 @@
+use logging::UnwrapReport;
 use winit::{
     application::ApplicationHandler,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
@@ -12,6 +13,7 @@ pub struct App<'a> {
 }
 
 impl App<'_> {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
             wgpu_instance: wgpu::Instance::new(
@@ -29,6 +31,8 @@ impl App<'_> {
     pub fn run(
         mut self,
     ) -> Result<(), winit::error::EventLoopError> {
+        logging::set_panic_hook();
+
         let ev = EventLoop::new()?;
         ev.set_control_flow(ControlFlow::Wait);
         ev.run_app(&mut self)
@@ -38,17 +42,30 @@ impl App<'_> {
 impl ApplicationHandler for App<'_> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.main_window.is_none() {
-            self.main_window = Some(WindowState::new(
-                &self.wgpu_instance,
-                WindowAttributes::default()
-                    .with_title("Vector")
-                    .with_active(true)
-                    .with_min_inner_size(
-                        winit::dpi::PhysicalSize::new(800, 600),
-                    )
-                    .with_maximized(true),
-                event_loop,
-            ));
+            self.main_window = Some({
+                use rwh_05::HasRawWindowHandle;
+
+                let state = WindowState::new(
+                    &self.wgpu_instance,
+                    WindowAttributes::default()
+                        .with_title("Vector")
+                        .with_active(true)
+                        .with_min_inner_size(
+                            winit::dpi::PhysicalSize::new(
+                                800, 600,
+                            ),
+                        )
+                        .with_maximized(true),
+                    event_loop,
+                )
+                .unwrap_report();
+
+                logging::set_dialog_box_owner(Some(
+                    state.window.raw_window_handle(),
+                ));
+
+                state
+            })
         }
     }
 

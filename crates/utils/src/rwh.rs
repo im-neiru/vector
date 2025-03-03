@@ -1,4 +1,4 @@
-pub(crate) fn convert_display_handle_06(
+pub fn convert_display_handle_06(
     handle: rwh_05::RawDisplayHandle,
 ) -> rwh_06::RawDisplayHandle {
     use std::ptr::NonNull;
@@ -81,7 +81,7 @@ pub(crate) fn convert_display_handle_06(
     }
 }
 
-pub(crate) fn convert_window_handle_06(
+pub fn convert_window_handle_06(
     handle: rwh_05::RawWindowHandle,
 ) -> rwh_06::RawWindowHandle {
     use std::num::{NonZeroIsize, NonZeroU32};
@@ -134,12 +134,17 @@ pub(crate) fn convert_window_handle_06(
             )
         }
         rwh_05::RawWindowHandle::Win32(win) => {
-            rwh_06::RawWindowHandle::Win32(
-                rwh_06::Win32WindowHandle::new(
+            rwh_06::RawWindowHandle::Win32({
+                let mut handle = rwh_06::Win32WindowHandle::new(
                     NonZeroIsize::new(win.hwnd as isize)
                         .expect("Win32 window handle is null"),
-                ),
-            )
+                );
+
+                handle.hinstance =
+                    NonZeroIsize::new(win.hinstance as isize);
+
+                handle
+            })
         }
         rwh_05::RawWindowHandle::Web(web) => {
             rwh_06::RawWindowHandle::Web(

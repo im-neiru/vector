@@ -1,4 +1,4 @@
-use crate::error::Error;
+use logging::ErrorKind;
 
 pub struct GraphicsState<'a> {
     surface: wgpu::Surface<'a>,
@@ -11,24 +11,28 @@ impl GraphicsState<'_> {
     pub async fn new(
         window: &winit::window::Window,
         instance: &wgpu::Instance,
-    ) -> Result<Self, Error> {
+    ) -> logging::Result<Self> {
         let surface = unsafe {
             use rwh_05::{
                 HasRawDisplayHandle, HasRawWindowHandle,
             };
 
-            instance.create_surface_unsafe(
-                wgpu::SurfaceTargetUnsafe::RawHandle {
-                    raw_display_handle:
-                        crate::utils::convert_display_handle_06(
-                            window.raw_display_handle(),
-                        ),
-                    raw_window_handle:
-                        crate::utils::convert_window_handle_06(
-                            window.raw_window_handle(),
-                        ),
-                },
-            )?
+            instance
+                .create_surface_unsafe(
+                    wgpu::SurfaceTargetUnsafe::RawHandle {
+                        raw_display_handle:
+                            utils::convert_display_handle_06(
+                                window.raw_display_handle(),
+                            ),
+                        raw_window_handle:
+                            utils::convert_window_handle_06(
+                                window.raw_window_handle(),
+                            ),
+                    },
+                )
+                .map_err(|e| {
+                    ErrorKind::CreateSurface(e).into_error()
+                })?
         };
 
         let adapter = instance
@@ -39,7 +43,9 @@ impl GraphicsState<'_> {
                 compatible_surface: Some(&surface),
             })
             .await
-            .ok_or(crate::error::Error::NoWgpuAdapter)?;
+            .ok_or(
+                logging::ErrorKind::NoWgpuAdapter.into_error(),
+            )?;
 
         let (device, queue) = adapter
             .request_device(
@@ -76,6 +82,8 @@ impl GraphicsState<'_> {
             desired_maximum_frame_latency: 2,
         };
 
+        println!("Backend: {}", adapter.get_info().backend);
+
         Ok(Self {
             surface,
             device,
@@ -102,9 +110,7 @@ impl GraphicsState<'_> {
         self.surface.configure(&self.device, &self.config);
     }
 
-    pub fn draw(
-        &mut self,
-    ) -> Result<(), wgpu::SurfaceError> {
+    pub fn draw(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
 
         let view = output.texture.create_view(
@@ -128,9 +134,9 @@ impl GraphicsState<'_> {
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(
                                     wgpu::Color {
-                                        r: 0.0,
-                                        g: 0.1,
-                                        b: 0.2,
+                                        r: 0.012,
+                                        g: 0.01,
+                                        b: 0.022,
                                         a: 1.0,
                                     },
                                 ),

@@ -12,3 +12,5 @@ pollster = { workspace = true }
 wgpu = { workspace = true }
 
 utils = { package = "vector-utils", path = "../utils", features = ["rwh"] }
+graphics = { package = "vector-graphics", path = "../graphics" }
+logging = { package = "vector-logging", path = "../logging" }
