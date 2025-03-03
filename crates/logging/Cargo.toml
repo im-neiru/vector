@@ -4,9 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+thiserror = "2.0.12"
 native-dialog = { workspace = true }
-rwh_05 = { workspace = true }
-rwh_06 = { workspace = true }
-pollster = { workspace = true }
-wgpu = { workspace = true }
-winit = { workspace = true }
