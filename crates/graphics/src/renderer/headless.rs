@@ -28,7 +28,11 @@ impl super::Target for Headless {
         (Option<wgpu::SurfaceTexture>, wgpu::TextureView),
         wgpu::SurfaceError,
     > {
-        // TODO:
+        let view = self.texture.create_view(
+            &wgpu::TextureViewDescriptor::default(),
+        );
+
+        Ok((None, view))
     }
 }
 
