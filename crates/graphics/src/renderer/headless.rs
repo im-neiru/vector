@@ -37,7 +37,7 @@ impl super::Target for Headless {
 }
 
 impl Headless {
-    pub(super) fn new(
+    pub(super) fn create(
         device: &wgpu::Device,
         width: u32,
         height: u32,

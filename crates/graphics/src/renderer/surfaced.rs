@@ -40,7 +40,7 @@ impl super::Target for Surfaced<'_> {
 }
 
 impl<'a> Surfaced<'a> {
-    pub(super) fn new(
+    pub(super) fn create(
         surface: wgpu::Surface<'a>,
         adapter: &wgpu::Adapter,
         width: u32,

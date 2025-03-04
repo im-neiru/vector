@@ -71,11 +71,11 @@ impl Renderer {
             )?;
 
         let target = if let Some(surface) = surface {
-            surfaced::Surfaced::new(
+            surfaced::Surfaced::create(
                 surface, &adapter, width, height,
             )
         } else {
-            headless::Headless::new(&device, width, height)
+            headless::Headless::create(&device, width, height)
         };
 
         #[cfg(debug_assertions)]
