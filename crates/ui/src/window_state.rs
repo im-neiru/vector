@@ -4,12 +4,12 @@ use winit::{
     window::{Window, WindowAttributes, WindowId},
 };
 
-pub struct WindowState<'a> {
+pub struct WindowState {
     pub window: Window,
-    pub renderer: Renderer<'a>,
+    pub renderer: Renderer,
 }
 
-impl WindowState<'_> {
+impl WindowState {
     pub fn new(
         instance: &wgpu::Instance,
         window_attributes: WindowAttributes,

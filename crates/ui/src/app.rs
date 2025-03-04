@@ -8,12 +8,12 @@ use winit::{
 
 use crate::window_state::WindowState;
 
-pub struct App<'a> {
+pub struct App {
     wgpu_instance: wgpu::Instance,
-    main_window: Option<WindowState<'a>>,
+    main_window: Option<WindowState>,
 }
 
-impl App<'_> {
+impl App {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
@@ -40,7 +40,7 @@ impl App<'_> {
     }
 }
 
-impl ApplicationHandler for App<'_> {
+impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.main_window.is_none() {
             self.main_window = Some({
