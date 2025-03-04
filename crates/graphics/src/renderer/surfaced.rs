@@ -42,8 +42,30 @@ impl super::Target for Surfaced<'_> {
 impl<'a> Surfaced<'a> {
     pub(super) fn new(
         surface: wgpu::Surface<'a>,
-        config: wgpu::SurfaceConfiguration,
+        adapter: &wgpu::Adapter,
+        width: u32,
+        height: u32,
     ) -> Box<dyn super::Target + 'a> {
+        let surface_caps = surface.get_capabilities(adapter);
+
+        let surface_format = surface_caps
+            .formats
+            .iter()
+            .find(|f| f.is_srgb())
+            .copied()
+            .unwrap_or(surface_caps.formats[0]);
+
+        let config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: surface_format,
+            width,
+            height,
+            present_mode: surface_caps.present_modes[0],
+            alpha_mode: surface_caps.alpha_modes[0],
+            view_formats: vec![],
+            desired_maximum_frame_latency: 2,
+        };
+
         Box::new(Self { surface, config })
     }
 }
