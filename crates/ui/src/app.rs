@@ -1,6 +1,7 @@
 use logging::UnwrapReport;
 use winit::{
     application::ApplicationHandler,
+    dpi::PhysicalSize,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
     window::WindowAttributes,
 };
@@ -89,26 +90,31 @@ impl ApplicationHandler for App<'_> {
                     }
                 }
             }
-            Resized(size) => {
+            Resized(PhysicalSize { width, height }) => {
                 if let Some(state) = self.main_window.as_mut() {
                     if state.is_matched(window_id) {
-                        state.graphics.resize(size);
+                        state.renderer.resize(width, height);
                     }
                 }
             }
             RedrawRequested => {
                 if let Some(state) = self.main_window.as_mut() {
                     if state.is_matched(window_id) {
-                        if let Err(err) = state.graphics.draw()
+                        if let Err(err) = state.renderer.draw()
                         {
                             use wgpu::SurfaceError::*;
                             match err {
                                 Outdated | Lost => {
-                                    state.graphics.resize(
-                                        state
-                                            .window
-                                            .inner_size(),
-                                    );
+                                    let PhysicalSize {
+                                        width,
+                                        height,
+                                    } = state
+                                        .window
+                                        .inner_size();
+
+                                    state
+                                        .renderer
+                                        .resize(width, height);
                                 }
                                 OutOfMemory => {
                                     event_loop.exit();

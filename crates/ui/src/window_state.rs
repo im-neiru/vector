@@ -1,13 +1,12 @@
+use graphics::Renderer;
 use winit::{
     event_loop::ActiveEventLoop,
     window::{Window, WindowAttributes, WindowId},
 };
 
-use crate::GraphicsState;
-
 pub struct WindowState<'a> {
     pub window: Window,
-    pub graphics: GraphicsState<'a>,
+    pub renderer: Renderer<'a>,
 }
 
 impl WindowState<'_> {
@@ -23,11 +22,24 @@ impl WindowState<'_> {
                     .into_error()
             })?;
 
-        let graphics = pollster::block_on(GraphicsState::new(
-            &window, instance,
-        ))?;
+        let renderer = pollster::block_on({
+            let winit::dpi::PhysicalSize { width, height } =
+                window.inner_size();
 
-        Ok(Self { window, graphics })
+            let target = unsafe {
+                wgpu::SurfaceTargetUnsafe::from_window(&window)
+                    .unwrap()
+            };
+
+            Renderer::create(
+                instance,
+                Some(target),
+                width,
+                height,
+            )
+        })?;
+
+        Ok(Self { window, renderer })
     }
 
     #[inline(always)]

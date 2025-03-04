@@ -14,6 +14,8 @@ pub enum ErrorKind {
     CreateSurface(wgpu::CreateSurfaceError),
     #[error("No compatible wgpu adapter found")]
     NoWgpuAdapter,
+    #[error("Request device error: {0}")]
+    RequestDeviceError(wgpu::RequestDeviceError),
 }
 
 pub type Result<T> =
