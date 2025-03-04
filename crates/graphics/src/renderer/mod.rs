@@ -1,21 +1,29 @@
-pub struct Renderer<'a> {
+mod headless;
+mod surfaced;
+
+pub struct Renderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
-    target: Target<'a>,
+    target: Box<dyn Target>,
 }
 
-enum Target<'a> {
-    Surface {
-        surface: wgpu::Surface<'a>,
-        config: wgpu::SurfaceConfiguration,
-    },
-    Headless {
+trait Target {
+    fn resize(
+        &mut self,
+        device: &wgpu::Device,
         width: u32,
         height: u32,
-    },
+    );
+
+    fn get_output(
+        &self,
+    ) -> Result<
+        (Option<wgpu::SurfaceTexture>, wgpu::TextureView),
+        wgpu::SurfaceError,
+    >;
 }
 
-impl Renderer<'_> {
+impl Renderer {
     pub async fn create(
         instance: &wgpu::Instance,
         target: Option<wgpu::SurfaceTargetUnsafe>,
@@ -84,9 +92,9 @@ impl Renderer<'_> {
                 desired_maximum_frame_latency: 2,
             };
 
-            Target::Surface { surface, config }
+            surfaced::Surfaced::new(surface, config)
         } else {
-            Target::Headless { width, height }
+            headless::Headless::new(width, height)
         };
 
         #[cfg(debug_assertions)]
@@ -99,58 +107,22 @@ impl Renderer<'_> {
         })
     }
 
+    #[inline]
     pub fn resize(&mut self, width: u32, height: u32) {
-        match &mut self.target {
-            Target::Surface { surface, config } => {
-                if (config.width == width
-                    && config.height == height)
-                    || width == 0
-                    || height == 0
-                {
-                    return;
-                }
-
-                config.width = width;
-                config.height = height;
-
-                surface.configure(&self.device, config);
-            }
-            Target::Headless {
-                width: current_width,
-                height: current_height,
-            } => {
-                if (*current_width == width
-                    && *current_height == height)
-                    || width == 0
-                    || height == 0
-                {
-                    return;
-                }
-
-                *current_width = width;
-                *current_height = height;
-            }
-        }
+        self.target.resize(&self.device, width, height);
     }
 
     pub fn draw(&mut self) -> Result<(), wgpu::SurfaceError> {
-        match &self.target {
-            Target::Surface { surface, config: _ } => {
-                let output = surface.get_current_texture()?;
+        let (output, view) = self.target.get_output()?;
 
-                let view = output.texture.create_view(
-                    &wgpu::TextureViewDescriptor::default(),
-                );
+        let mut encoder = self.device.create_command_encoder(
+            &wgpu::CommandEncoderDescriptor {
+                label: Some("Render Encoder"),
+            },
+        );
 
-                let mut encoder =
-                    self.device.create_command_encoder(
-                        &wgpu::CommandEncoderDescriptor {
-                            label: Some("Render Encoder"),
-                        },
-                    );
-
-                {
-                    let _render_pass = encoder.begin_render_pass(
+        {
+            let _render_pass = encoder.begin_render_pass(
                 &wgpu::RenderPassDescriptor {
                     label: Some("Render Pass"),
                     color_attachments: &[Some(
@@ -175,20 +147,14 @@ impl Renderer<'_> {
                     timestamp_writes: None,
                 },
             );
-                }
-
-                self.queue
-                    .submit(std::iter::once(encoder.finish()));
-                output.present();
-                Ok(())
-            }
-            Target::Headless {
-                width: _,
-                height: _,
-            } => {
-                // TODO: Headless
-                Ok(())
-            }
         }
+
+        self.queue.submit(std::iter::once(encoder.finish()));
+
+        if let Some(output) = output {
+            output.present();
+        }
+
+        Ok(())
     }
 }
