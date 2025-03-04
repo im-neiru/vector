@@ -1,6 +1,6 @@
 pub(crate) struct Headless {
-    pub(super) width: u32,
-    pub(super) height: u32,
+    extent: wgpu::Extent3d,
+    texture: wgpu::Texture,
 }
 
 impl super::Target for Headless {
@@ -10,15 +10,16 @@ impl super::Target for Headless {
         width: u32,
         height: u32,
     ) {
-        if (self.width == width && self.height == height)
+        if (self.extent.width == width
+            && self.extent.height == height)
             || width == 0
             || height == 0
         {
             return;
         }
 
-        self.width = width;
-        self.height = height;
+        self.extent.width = width;
+        self.extent.height = height;
     }
 
     fn get_output(
@@ -33,9 +34,29 @@ impl super::Target for Headless {
 
 impl Headless {
     pub(super) fn new(
+        device: &wgpu::Device,
         width: u32,
         height: u32,
     ) -> Box<dyn super::Target> {
-        Box::new(Self { width, height })
+        let extent = wgpu::Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        };
+
+        let texture =
+            device.create_texture(&wgpu::TextureDescriptor {
+                label: Some("Headless Render Target"),
+                size: extent,
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                    | wgpu::TextureUsages::COPY_SRC,
+                view_formats: &[],
+            });
+
+        Box::new(Self { texture, extent })
     }
 }
