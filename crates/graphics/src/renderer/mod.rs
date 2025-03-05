@@ -19,7 +19,7 @@ pub struct Renderer {
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct Uniforms {
-    color: [f32; 4],
+    color: crate::Color,
     center_tl: [f32; 2],
     center_tr: [f32; 2],
     center_bl: [f32; 2],
@@ -123,7 +123,7 @@ impl Renderer {
             [1.0 - 2.0 * radius_br, 2.0 * radius_br - 1.0];
 
         let u_fragment_data = Uniforms {
-            color: [0.793, 0.0, 0.182, 1.0],
+            color: crate::Color::DARK_GREEN,
             center_tl,
             center_tr,
             center_bl,
