@@ -8,3 +8,4 @@ pollster = { workspace = true }
 wgpu = { workspace = true }
 logging = { package = "vector-logging", path = "../logging" }
 ttf-parser = "0.25.1"
+bytemuck = "1.22.0"
