@@ -42,6 +42,14 @@ impl super::Target for Surfaced<'_> {
     fn format(&self) -> wgpu::TextureFormat {
         self.config.format
     }
+
+    #[inline]
+    fn u_transform(&self) -> super::TransformUniform {
+        super::TransformUniform::new(
+            self.config.width,
+            self.config.height,
+        )
+    }
 }
 
 impl<'a> Surfaced<'a> {
@@ -56,9 +64,9 @@ impl<'a> Surfaced<'a> {
         let surface_format = surface_caps
             .formats
             .iter()
-            .find(|f| f.is_srgb())
+            .find(|f| **f == wgpu::TextureFormat::Bgra8Unorm)
             .copied()
-            .unwrap_or(surface_caps.formats[0]);
+            .expect("Bgra8Unorm not found");
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,

@@ -39,6 +39,14 @@ impl super::Target for Headless {
     fn format(&self) -> wgpu::TextureFormat {
         self.texture.format()
     }
+
+    #[inline]
+    fn u_transform(&self) -> super::TransformUniform {
+        super::TransformUniform::new(
+            self.extent.width,
+            self.extent.height,
+        )
+    }
 }
 
 impl Headless {
@@ -60,7 +68,7 @@ impl Headless {
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                format: wgpu::TextureFormat::Bgra8Unorm,
                 usage: wgpu::TextureUsages::RENDER_ATTACHMENT
                     | wgpu::TextureUsages::COPY_SRC,
                 view_formats: &[],

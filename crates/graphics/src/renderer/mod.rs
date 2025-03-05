@@ -1,33 +1,23 @@
-use wgpu::util::DeviceExt;
-
-use crate::shaders;
-
 mod headless;
 mod surfaced;
+mod transform_uniform;
+
+use transform_uniform::TransformUniform;
+
+use wgpu::util::DeviceExt;
+
+use crate::primitives::{
+    Primitive, PrimitiveState, RoundedRectangle,
+};
 
 pub struct Renderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
     target: Box<dyn Target>,
-    rectangle_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    index_count: u32,
-    uniform_bind_group: wgpu::BindGroup,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct Uniforms {
-    color: crate::Color,
-    center_tl: [f32; 2],
-    center_tr: [f32; 2],
-    center_bl: [f32; 2],
-    center_br: [f32; 2],
-    radius_tl: f32,
-    radius_tr: f32,
-    radius_bl: f32,
-    radius_br: f32,
+    u_transform: wgpu::Buffer,
+    rect1: crate::primitives::RoundedRectangleState,
+    rect2: crate::primitives::RoundedRectangleState,
+    update_transform: bool,
 }
 
 trait Target {
@@ -46,6 +36,8 @@ trait Target {
     >;
 
     fn format(&self) -> wgpu::TextureFormat;
+
+    fn u_transform(&self) -> TransformUniform;
 }
 
 impl Renderer {
@@ -106,189 +98,80 @@ impl Renderer {
         #[cfg(debug_assertions)]
         println!("Backend: {}", adapter.get_info().backend);
 
-        let shader_module = shaders::create_rectangle(&device);
+        let u_transform = TransformUniform::new(width, height);
 
-        let radius_tl: f32 = 0.04;
-        let radius_tr: f32 = 0.04;
-        let radius_br: f32 = 0.04;
-        let radius_bl: f32 = 0.04;
-
-        let center_tl =
-            [2.0 * radius_tl - 1.0, 1.0 - 2.0 * radius_tl];
-        let center_tr =
-            [1.0 - 2.0 * radius_tr, 1.0 - 2.0 * radius_tr];
-        let center_bl =
-            [2.0 * radius_bl - 1.0, 2.0 * radius_bl - 1.0];
-        let center_br =
-            [1.0 - 2.0 * radius_br, 2.0 * radius_br - 1.0];
-
-        let u_fragment_data = Uniforms {
-            color: crate::Color::DARK_GREEN,
-            center_tl,
-            center_tr,
-            center_bl,
-            center_br,
-            radius_tl: radius_tl * 2.0,
-            radius_tr: radius_tr * 2.0,
-            radius_br: radius_br * 2.0,
-            radius_bl: radius_bl * 2.0,
-        };
-
-        let uniform_buffer = device.create_buffer_init(
+        let u_transform = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
-                label: Some("Fragment Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[
-                    u_fragment_data,
-                ]),
+                label: Some("u_transform"),
+                contents: bytemuck::cast_slice(&[u_transform]),
                 usage: wgpu::BufferUsages::UNIFORM
                     | wgpu::BufferUsages::COPY_DST,
             },
         );
 
-        use std::num::NonZeroU64;
+        let rect1 = RoundedRectangle {
+            color: crate::Color::DODGER_BLUE,
+            position: crate::Vec2::new(24.0, 54.0),
+            size: crate::Vec2::new(600.0, 128.0),
+            top_left_radius: 4.,
+            top_right_radius: 32.,
+            bottom_left_radius: 32.,
+            bottom_right_radius: 32.,
+        };
 
-        let uniform_bind_group_layout = device.create_bind_group_layout(
-            &wgpu::BindGroupLayoutDescriptor {
-            label: Some("Uniform Bind Group Layout"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: NonZeroU64::new(std::mem::size_of::<Uniforms>() as u64),
-                },
-                count: None,
-            }],
-        });
+        let rect2 = RoundedRectangle {
+            color: crate::Color::DEEP_PINK,
+            position: crate::Vec2::new(400.0, 128.0),
+            size: crate::Vec2::new(600.0, 128.0),
+            top_left_radius: 32.,
+            top_right_radius: 32.,
+            bottom_left_radius: 32.,
+            bottom_right_radius: 32.,
+        };
 
-        let uniform_bind_group = device.create_bind_group(
-            &wgpu::BindGroupDescriptor {
-                label: Some("Uniform Bind Group"),
-                layout: &uniform_bind_group_layout,
-                entries: &[wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: uniform_buffer
-                        .as_entire_binding(),
-                }],
+        let rect1 = rect1.create_state(
+            &device,
+            target.format(),
+            &u_transform,
+            wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: std::num::NonZeroU64::new(
+                    std::mem::size_of::<TransformUniform>()
+                        as u64,
+                ),
             },
         );
 
-        let rectangle_pipeline = {
-            let pipeline_layout = device
-                .create_pipeline_layout(
-                    &wgpu::PipelineLayoutDescriptor {
-                        label: Some("Render Pipeline Layout"),
-                        bind_group_layouts: &[
-                            &uniform_bind_group_layout,
-                        ],
-                        push_constant_ranges: &[],
-                    },
-                );
-
-            let vertex_buffer_layout =
-                wgpu::VertexBufferLayout {
-                    array_stride: std::mem::size_of::<[f32; 2]>(
-                    )
-                        as wgpu::BufferAddress,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &wgpu::vertex_attr_array![0 => Float32x2],
-                };
-
-            device.create_render_pipeline(
-                &wgpu::RenderPipelineDescriptor {
-                    label: Some("Render Pipeline"),
-                    layout: Some(&pipeline_layout),
-                    vertex: wgpu::VertexState {
-                        module: &shader_module,
-                        entry_point: Some("vs_main"),
-                        buffers: &[vertex_buffer_layout],
-                        compilation_options: wgpu::PipelineCompilationOptions::default()
-                    },
-                    fragment: Some(wgpu::FragmentState {
-                        module: &shader_module,
-                        entry_point: Some("fs_main"),
-                        targets: &[Some(wgpu::ColorTargetState {
-                            format: target.format(),
-                            blend: Some(
-                                wgpu::BlendState {
-                                    color: wgpu::BlendComponent {
-                                        src_factor: wgpu::BlendFactor::SrcAlpha,
-                                        dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                                        operation: wgpu::BlendOperation::Add,
-                                    },
-                                    alpha: wgpu::BlendComponent {
-                                        src_factor: wgpu::BlendFactor::One,
-                                        dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                                        operation: wgpu::BlendOperation::Add,
-                                    },
-                                }
-                            ),
-                            write_mask: wgpu::ColorWrites::ALL,
-                        })],
-                        compilation_options: wgpu::PipelineCompilationOptions::default()
-                    }),
-                    primitive: wgpu::PrimitiveState::default(),
-                    depth_stencil: None,
-                    multisample:
-                        wgpu::MultisampleState::default(),
-                    multiview: None,
-                    cache: None,
-                },
-            )
-        };
-
-        let vertex_buffer = {
-            let vertex_data = [
-                crate::Vec2::new(-1., -1.),
-                crate::Vec2::new(1., -1.),
-                crate::Vec2::new(1., 1.),
-                crate::Vec2::new(-1., 1.),
-            ];
-
-            device.create_buffer_init(
-                &wgpu::util::BufferInitDescriptor {
-                    label: Some("Vertex Buffer"),
-                    contents: bytemuck::cast_slice(
-                        &vertex_data,
-                    ),
-                    usage: wgpu::BufferUsages::VERTEX,
-                },
-            )
-        };
-
-        let (index_buffer, index_count) = {
-            let index_data: &[u16] = &[0, 1, 2, 2, 3, 0];
-
-            (
-                device.create_buffer_init(
-                    &wgpu::util::BufferInitDescriptor {
-                        label: Some("Index Buffer"),
-                        contents: bytemuck::cast_slice(
-                            index_data,
-                        ),
-                        usage: wgpu::BufferUsages::INDEX,
-                    },
+        let rect2 = rect2.create_state(
+            &device,
+            target.format(),
+            &u_transform,
+            wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: std::num::NonZeroU64::new(
+                    std::mem::size_of::<TransformUniform>()
+                        as u64,
                 ),
-                index_data.len() as u32,
-            )
-        };
+            },
+        );
 
         Ok(Self {
             device,
             queue,
             target,
-            rectangle_pipeline,
-            vertex_buffer,
-            index_buffer,
-            index_count,
-            uniform_bind_group,
+            u_transform,
+            rect1,
+            rect2,
+            update_transform: false,
         })
     }
 
     #[inline]
     pub fn resize(&mut self, width: u32, height: u32) {
         self.target.resize(&self.device, width, height);
+        self.update_transform = true;
     }
 
     pub fn draw(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -299,6 +182,18 @@ impl Renderer {
                 label: Some("Render Encoder"),
             },
         );
+
+        if self.update_transform {
+            let u_transform = self.target.u_transform();
+
+            self.queue.write_buffer(
+                &self.u_transform,
+                0,
+                bytemuck::cast_slice(&[u_transform]),
+            );
+
+            self.update_transform = false;
+        }
 
         {
             let mut render_pass = encoder.begin_render_pass(
@@ -311,9 +206,9 @@ impl Renderer {
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(
                                     wgpu::Color {
-                                        r: 0.95,
-                                        g: 0.95,
-                                        b: 0.95,
+                                        r: 0.122,
+                                        g: 0.137,
+                                        b: 0.208,
                                         a: 1.,
                                     },
                                 ),
@@ -327,28 +222,8 @@ impl Renderer {
                 },
             );
 
-            render_pass.set_pipeline(&self.rectangle_pipeline);
-            render_pass.set_vertex_buffer(
-                0,
-                self.vertex_buffer.slice(..),
-            );
-
-            render_pass.set_index_buffer(
-                self.index_buffer.slice(..),
-                wgpu::IndexFormat::Uint16,
-            );
-
-            render_pass.set_bind_group(
-                0,
-                &self.uniform_bind_group,
-                &[],
-            );
-
-            render_pass.draw_indexed(
-                0..self.index_count,
-                0,
-                0..1,
-            );
+            self.rect1.draw(&mut render_pass);
+            self.rect2.draw(&mut render_pass);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

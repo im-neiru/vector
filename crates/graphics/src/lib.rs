@@ -1,5 +1,6 @@
 mod charset;
 mod color;
+mod primitives;
 mod renderer;
 mod shaders;
 mod vec2;
