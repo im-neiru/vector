@@ -19,7 +19,7 @@ impl App {
         Self {
             wgpu_instance: wgpu::Instance::new(
                 &wgpu::InstanceDescriptor {
-                    backends: wgpu::Backends::PRIMARY,
+                    backends: wgpu::Backends::VULKAN,
                     flags: wgpu::InstanceFlags::default(),
                     backend_options:
                         wgpu::BackendOptions::default(),
@@ -53,7 +53,7 @@ impl ApplicationHandler for App {
                         .with_active(true)
                         .with_min_inner_size(
                             winit::dpi::PhysicalSize::new(
-                                800, 600,
+                                620, 465,
                             ),
                         )
                         .with_maximized(true),

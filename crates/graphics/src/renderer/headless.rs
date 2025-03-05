@@ -34,6 +34,11 @@ impl super::Target for Headless {
 
         Ok((None, view))
     }
+
+    #[inline]
+    fn format(&self) -> wgpu::TextureFormat {
+        self.texture.format()
+    }
 }
 
 impl Headless {

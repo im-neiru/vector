@@ -1,6 +1,8 @@
 use std::{fmt, ops};
 
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, bytemuck::Zeroable,
+)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
@@ -120,3 +122,5 @@ impl fmt::Display for Vec2 {
             .finish()
     }
 }
+
+unsafe impl bytemuck::Pod for Vec2 {}

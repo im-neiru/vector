@@ -37,6 +37,11 @@ impl super::Target for Surfaced<'_> {
 
         Ok((Some(output), view))
     }
+
+    #[inline]
+    fn format(&self) -> wgpu::TextureFormat {
+        self.config.format
+    }
 }
 
 impl<'a> Surfaced<'a> {
