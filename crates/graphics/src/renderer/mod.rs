@@ -110,19 +110,19 @@ impl Renderer {
         );
 
         let rect1 = RoundedRectangle {
-            color: crate::Color::DODGER_BLUE,
-            position: crate::Vec2::new(24.0, 54.0),
-            size: crate::Vec2::new(600.0, 128.0),
-            top_left_radius: 4.,
-            top_right_radius: 32.,
-            bottom_left_radius: 32.,
-            bottom_right_radius: 32.,
+            color: crate::Color::ORANGE_RED,
+            position: crate::Vec2::new(8.0, 8.0),
+            size: crate::Vec2::new(64.0, 96.0),
+            top_left_radius: 128.,
+            top_right_radius: 128.,
+            bottom_left_radius: 128.,
+            bottom_right_radius: 128.,
         };
 
         let rect2 = RoundedRectangle {
-            color: crate::Color::DEEP_PINK,
-            position: crate::Vec2::new(400.0, 128.0),
-            size: crate::Vec2::new(600.0, 128.0),
+            color: crate::Color::ORANGE,
+            position: crate::Vec2::new(150.0, 128.0),
+            size: crate::Vec2::new(128.0, 32.0),
             top_left_radius: 32.,
             top_right_radius: 32.,
             bottom_left_radius: 32.,

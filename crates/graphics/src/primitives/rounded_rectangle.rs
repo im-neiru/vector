@@ -1,4 +1,4 @@
-use std::num::NonZeroU64;
+use std::{num::NonZeroU64, ops::Mul};
 use wgpu::util::DeviceExt;
 
 pub struct RoundedRectangle {
@@ -33,36 +33,32 @@ impl super::Primitive for RoundedRectangle {
         let shader_module =
             crate::shaders::create_rectangle(device);
 
-        let min = f32::min(self.size.x, self.size.y) * 0.5;
+        let max = f32::min(self.size.x, self.size.y) * 0.54;
 
-        let radius_tl = self.top_left_radius.clamp(0.0, min);
-        let radius_tr = self.top_right_radius.clamp(0.0, min);
-        let radius_bl = self.bottom_left_radius.clamp(0.0, min);
-        let radius_br =
-            self.bottom_right_radius.clamp(0.0, min);
+        let tl = self.top_left_radius.clamp(0., max);
+        let tr = self.top_right_radius.clamp(0., max);
+        let bl = self.bottom_left_radius.clamp(0., max);
+        let br = self.bottom_right_radius.clamp(0., max);
 
         let fs_uniform = FsUniform {
             color: self.color,
-            center_tl: crate::Vec2 {
-                x: radius_tl,
-                y: radius_tl,
-            },
+            center_tl: crate::Vec2 { x: tl, y: tl },
             center_tr: crate::Vec2 {
-                x: self.size.x - radius_tr,
-                y: radius_tr,
+                x: self.size.x - tr,
+                y: tr,
             },
             center_bl: crate::Vec2 {
-                x: radius_bl,
-                y: self.size.y - radius_bl,
+                x: bl,
+                y: self.size.y - bl,
             },
             center_br: crate::Vec2 {
-                x: self.size.x - radius_br,
-                y: self.size.y - radius_br,
+                x: self.size.x - br,
+                y: self.size.y - br,
             },
-            radius_tl,
-            radius_tr,
-            radius_bl,
-            radius_br,
+            radius_tl: tl,
+            radius_tr: tr,
+            radius_bl: bl,
+            radius_br: br,
         };
 
         let fs_uniform_buffer = device.create_buffer_init(

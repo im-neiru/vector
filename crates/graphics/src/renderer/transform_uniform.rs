@@ -7,15 +7,21 @@ pub(crate) struct TransformUniform {
 
 impl TransformUniform {
     pub(crate) fn new(width: u32, height: u32) -> Self {
-        let w = width as f32;
-        let h = height as f32;
+        use std::ops::Mul;
+
+        let span = {
+            let w = width as f32;
+            let h = height as f32;
+
+            crate::Vec2::new(w, h).mul(0.5)
+        };
 
         Self {
-            scale: crate::Vec2 {
-                x: w.recip(),
-                y: h.recip(),
+            scale: span.recip(),
+            translate: crate::Vec2 {
+                x: -span.x,
+                y: span.y,
             },
-            translate: crate::Vec2 { x: -w, y: h },
         }
     }
 }

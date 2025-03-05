@@ -64,6 +64,14 @@ impl Vec2 {
     pub fn is_nan(self) -> bool {
         self.x.is_nan() || self.y.is_nan()
     }
+
+    #[inline]
+    pub fn recip(self) -> Self {
+        Self {
+            x: self.x.recip(),
+            y: self.y.recip(),
+        }
+    }
 }
 
 impl ops::Add for Vec2 {
