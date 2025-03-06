@@ -93,14 +93,17 @@ impl ApplicationHandler for App {
             Resized(PhysicalSize { width, height }) => {
                 if let Some(state) = self.main_window.as_mut() {
                     if state.is_matched(window_id) {
-                        state.renderer.resize(width, height);
+                        state
+                            .draw_context
+                            .resize(width, height);
                     }
                 }
             }
             RedrawRequested => {
                 if let Some(state) = self.main_window.as_mut() {
                     if state.is_matched(window_id) {
-                        if let Err(err) = state.renderer.draw()
+                        if let Err(err) =
+                            state.draw_context.draw()
                         {
                             use wgpu::SurfaceError::*;
                             match err {
@@ -113,7 +116,7 @@ impl ApplicationHandler for App {
                                         .inner_size();
 
                                     state
-                                        .renderer
+                                        .draw_context
                                         .resize(width, height);
                                 }
                                 OutOfMemory => {

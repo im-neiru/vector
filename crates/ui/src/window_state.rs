@@ -1,4 +1,4 @@
-use graphics::Renderer;
+use graphics::DrawContext;
 use winit::{
     event_loop::ActiveEventLoop,
     window::{Window, WindowAttributes, WindowId},
@@ -6,7 +6,7 @@ use winit::{
 
 pub struct WindowState {
     pub window: Window,
-    pub renderer: Renderer,
+    pub draw_context: DrawContext,
 }
 
 impl WindowState {
@@ -31,7 +31,7 @@ impl WindowState {
                     .unwrap()
             };
 
-            Renderer::create(
+            DrawContext::create(
                 instance,
                 Some(target),
                 width,
@@ -39,7 +39,10 @@ impl WindowState {
             )
         })?;
 
-        Ok(Self { window, renderer })
+        Ok(Self {
+            window,
+            draw_context: renderer,
+        })
     }
 
     #[inline(always)]
