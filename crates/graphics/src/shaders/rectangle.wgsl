@@ -1,37 +1,34 @@
-
-struct TranformUniform {
+struct TransformUniform {
     scale: vec2<f32>,
     translate: vec2<f32>,
-};
+}
 
 struct FsUniform {
-    color: vec4<f32>,
-    center_tl: vec2<f32>,
-    center_tr: vec2<f32>,
-    center_bl: vec2<f32>,
-    center_br: vec2<f32>,
-    radius_tl: f32,
-    radius_tr: f32,
-    radius_bl: f32,
-    radius_br: f32,
-};
+    color: vec4<f32>,    // Use this if you want to tint the shape.
+    size: vec2<f32>,     // Size of the inner (non–padded) rounded rectangle.
+    radius_tl: f32,      // Top–left corner radius.
+    radius_tr: f32,      // Top–right corner radius.
+    radius_bl: f32,      // Bottom–left corner radius.
+    radius_br: f32,      // Bottom–right corner radius.
+    padding: vec2<f32>,  // Extra padding.
+}
 
 struct VSOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) uv: vec2<f32>,
-};
-
+}
 
 @group(0) @binding(0)
-var<uniform> u_transform: TranformUniform;
-
+var<uniform> u_transform: TransformUniform;
 
 @group(0) @binding(1)
 var<uniform> fs_uniform: FsUniform;
 
 @vertex
-fn vs_main(@location(0) position: vec2<f32>,
-    @location(1) uv: vec2<f32>) -> VSOutput {
+fn vs_main(
+    @location(0) position: vec2<f32>, @location(1) uv: vec2<f32>
+) -> VSOutput {
+
     let mapped_pos = (vec2(position.x, -position.y) + u_transform.translate) * u_transform.scale;
     var output: VSOutput;
     output.clip_position = vec4<f32>(mapped_pos, 0.0, 1.0);
@@ -39,67 +36,50 @@ fn vs_main(@location(0) position: vec2<f32>,
     output.uv = uv;
     return output;
 }
-@fragment
-fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
-    let aa: f32 = 1.9;
-    var alpha: f32 = 1.0;
-    let baseColor = fs_uniform.color;
 
 
-    let c_left = fs_uniform.center_tl.y > fs_uniform.center_bl.y;
-    let c_right = fs_uniform.center_tr.y > fs_uniform.center_br.y;
-    let c_top = fs_uniform.center_tl.x > fs_uniform.center_tr.x;
-    let c_bottom = fs_uniform.center_bl.x > fs_uniform.center_br.x;
+fn rounded_sdf(p: vec2<f32>, b: vec2<f32>, r: f32) -> f32 {
+    let d = abs(p) - b + vec2<f32>(r);
+    return min(max(d.x, d.y), 0.0) + length(max(d, vec2<f32>(0.0))) - r;
+}
 
+fn pseudo_msdf(uv: vec2<f32>) -> vec3<f32> {
+    let halfSize = fs_uniform.size * 0.5;
+    let p = uv;
 
-    if uv.x < fs_uniform.center_tl.x && uv.y < fs_uniform.center_tl.y {
-        let d = distance(uv, fs_uniform.center_tl);
-        alpha = 1.0 - smoothstep(fs_uniform.radius_tl, fs_uniform.radius_tl + aa, d);
-    } else if uv.x > fs_uniform.center_tr.x && uv.y < fs_uniform.center_tr.y {
-        let d = distance(uv, fs_uniform.center_tr);
-        alpha = 1.0 - smoothstep(fs_uniform.radius_tr, fs_uniform.radius_tr + aa, d);
-    } else if uv.x < fs_uniform.center_bl.x && uv.y > fs_uniform.center_bl.y {
-        let d = distance(uv, fs_uniform.center_bl);
-        alpha = 1.0 - smoothstep(fs_uniform.radius_bl, fs_uniform.radius_bl + aa, d);
-    } else if uv.x > fs_uniform.center_br.x && uv.y > fs_uniform.center_br.y {
-        let d = distance(uv, fs_uniform.center_br);
-        alpha = 1.0 - smoothstep(fs_uniform.radius_br, fs_uniform.radius_br + aa, d);
-    }
-
-    if c_left && c_right && c_top && c_bottom {
-        let center = (fs_uniform.center_tl + fs_uniform.center_tr + fs_uniform.center_bl + fs_uniform.center_br) * 0.25;
-        let avgRadius = (fs_uniform.radius_tl + fs_uniform.radius_tr + fs_uniform.radius_bl + fs_uniform.radius_br) * 0.25;
-        let d = distance(uv, center);
-        alpha = 1.0 - smoothstep(avgRadius, avgRadius + aa, d);
+    var r: f32 = 0.0;
+    if p.x >= 0.0 && p.y >= 0.0 {
+        r = fs_uniform.radius_tr;
+    } else if p.x < 0.0 && p.y >= 0.0 {
+        r = fs_uniform.radius_tl;
+    } else if p.x < 0.0 && p.y < 0.0 {
+        r = fs_uniform.radius_bl;
     } else {
-        if c_left && uv.x < ((fs_uniform.center_tl.x + fs_uniform.center_bl.x) * 0.5) {
-            let leftCenter = (fs_uniform.center_tl + fs_uniform.center_bl) * 0.5;
-            let leftRadius = (fs_uniform.radius_tl + fs_uniform.radius_bl) * 0.5;
-            let d = distance(uv, leftCenter);
-            alpha = min(alpha, 1.0 - smoothstep(leftRadius, leftRadius + aa, d));
-        }
-
-        if c_right && uv.x > ((fs_uniform.center_tr.x + fs_uniform.center_br.x) * 0.5) {
-            let rightCenter = (fs_uniform.center_tr + fs_uniform.center_br) * 0.5;
-            let rightRadius = (fs_uniform.radius_tr + fs_uniform.radius_br) * 0.5;
-            let d = distance(uv, rightCenter);
-            alpha = min(alpha, 1.0 - smoothstep(rightRadius, rightRadius + aa, d));
-        }
-
-        if c_top && uv.y < ((fs_uniform.center_tl.y + fs_uniform.center_tr.y) * 0.5) {
-            let topCenter = (fs_uniform.center_tl + fs_uniform.center_tr) * 0.5;
-            let topRadius = (fs_uniform.radius_tl + fs_uniform.radius_tr) * 0.5;
-            let d = distance(uv, topCenter);
-            alpha = min(alpha, 1.0 - smoothstep(topRadius, topRadius + aa, d));
-        }
-
-        if c_bottom && uv.y > ((fs_uniform.center_bl.y + fs_uniform.center_br.y) * 0.5) {
-            let bottomCenter = (fs_uniform.center_bl + fs_uniform.center_br) * 0.5;
-            let bottomRadius = (fs_uniform.radius_bl + fs_uniform.radius_br) * 0.5;
-            let d = distance(uv, bottomCenter);
-            alpha = min(alpha, 1.0 - smoothstep(bottomRadius, bottomRadius + aa, d));
-        }
+        r = fs_uniform.radius_br;
     }
 
-    return vec4<f32>(baseColor.rgb, baseColor.a * alpha);
+    let sdf = rounded_sdf(p, halfSize, r);
+
+    let bias = 0.25 * fwidth(sdf);
+    let sdfR = sdf + bias;
+    let sdfG = sdf;
+    let sdfB = sdf - bias;
+    return vec3<f32>(sdfR, sdfG, sdfB);
+}
+
+fn median(r: f32, g: f32, b: f32) -> f32 {
+    return max(min(r, g), min(max(r, g), b));
+}
+
+@fragment
+fn fs_main(@location(0) uv: vec2<f32 >) -> @location(0) vec4<f32> {
+    let aa = 0.6; // anti-aliasing factor
+
+    let s = pseudo_msdf(uv);
+    let sd = median(s.r, s.g, s.b);
+
+    let afwidth = fwidth(sd) * aa;
+    let alpha = 1.0 - smoothstep(-afwidth, afwidth, sd);
+
+    return vec4(fs_uniform.color.rgb, fs_uniform.color.a * alpha);
 }

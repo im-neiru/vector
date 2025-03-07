@@ -20,6 +20,8 @@ pub struct RoundedRectangleState {
     uniform_bind_group: wgpu::BindGroup,
 }
 
+const PADDING: crate::Vec2 = crate::Vec2::splat(2.);
+
 impl super::Primitive for RoundedRectangle {
     type State = RoundedRectangleState;
 
@@ -34,7 +36,7 @@ impl super::Primitive for RoundedRectangle {
             crate::shaders::create_rectangle(device);
 
         let max =
-            f32::min(self.size.width, self.size.height) * 0.54;
+            f32::min(self.size.width, self.size.height) * 0.5;
 
         let tl = self.top_left_radius.clamp(0., max);
         let tr = self.top_right_radius.clamp(0., max);
@@ -43,23 +45,12 @@ impl super::Primitive for RoundedRectangle {
 
         let fs_uniform = FsUniform {
             color: self.color,
-            center_tl: crate::Vec2 { x: tl, y: tl },
-            center_tr: crate::Vec2 {
-                x: self.size.width - tr,
-                y: tr,
-            },
-            center_bl: crate::Vec2 {
-                x: bl,
-                y: self.size.height - bl,
-            },
-            center_br: crate::Vec2 {
-                x: self.size.width - br,
-                y: self.size.height - br,
-            },
+            size: self.size,
             radius_tl: tl,
             radius_tr: tr,
             radius_bl: bl,
             radius_br: br,
+            padding: PADDING,
         };
 
         let fs_uniform_buffer = device.create_buffer_init(
@@ -178,38 +169,45 @@ impl super::Primitive for RoundedRectangle {
             )
         };
 
+        let m_u = self.size.width + PADDING.x;
+        let m_v = self.size.height + PADDING.y;
+        let half_u = m_u * 0.5;
+        let half_v = m_v * 0.5;
+
         let vertex_buffer = {
             let vertex_data = [
                 [
-                    crate::Vec2::new(
-                        self.position.x,
-                        self.position.y,
-                    ),
-                    crate::Vec2::new(0., 0.),
+                    self.position - PADDING,
+                    crate::Vec2::new(-half_u, -half_v),
                 ],
                 [
                     crate::Vec2::new(
-                        self.position.x + self.size.width,
-                        self.position.y,
+                        self.position.x
+                            + self.size.width
+                            + PADDING.x,
+                        self.position.y - PADDING.y,
                     ),
-                    crate::Vec2::new(self.size.width, 0.),
+                    crate::Vec2::new(half_u, -half_v),
                 ],
                 [
                     crate::Vec2::new(
-                        self.position.x + self.size.width,
-                        self.position.y + self.size.height,
+                        self.position.x
+                            + self.size.width
+                            + PADDING.x,
+                        self.position.y
+                            + self.size.height
+                            + PADDING.y,
                     ),
-                    crate::Vec2::new(
-                        self.size.width,
-                        self.size.height,
-                    ),
+                    crate::Vec2::new(half_u, half_v),
                 ],
                 [
                     crate::Vec2::new(
-                        self.position.x,
-                        self.position.y + self.size.height,
+                        self.position.x - PADDING.y,
+                        self.position.y
+                            + self.size.height
+                            + PADDING.y,
                     ),
-                    crate::Vec2::new(0., self.size.height),
+                    crate::Vec2::new(-half_u, half_v),
                 ],
             ];
 
@@ -277,12 +275,10 @@ impl super::PrimitiveState for RoundedRectangleState {
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct FsUniform {
     color: crate::Color,
-    center_tl: crate::Vec2,
-    center_tr: crate::Vec2,
-    center_bl: crate::Vec2,
-    center_br: crate::Vec2,
+    size: crate::Size,
     radius_tl: f32,
     radius_tr: f32,
     radius_bl: f32,
     radius_br: f32,
+    padding: crate::Vec2,
 }
