@@ -16,6 +16,10 @@ pub enum ErrorKind {
     NoWgpuAdapter,
     #[error("Request device error: {0}")]
     RequestDeviceError(wgpu::RequestDeviceError),
+    #[error("Size must not exceed `Size::MAX`")]
+    SizeExceedMaxSize,
+    #[error("Size cannot be negative")]
+    NegativeSize,
 }
 
 pub type Result<T> =
@@ -24,7 +28,7 @@ pub type Result<T> =
 impl ErrorKind {
     #[inline(always)]
     #[track_caller]
-    pub fn into_error(self) -> self::Error<'static> {
+    pub const fn into_error(self) -> self::Error<'static> {
         Error {
             location: Location::caller(),
             kind: self,
@@ -33,7 +37,7 @@ impl ErrorKind {
 
     #[inline(always)]
     #[track_caller]
-    pub fn into_result<T>(self) -> self::Result<T> {
+    pub const fn into_result<T>(self) -> self::Result<T> {
         Err(Error {
             location: Location::caller(),
             kind: self,
