@@ -130,10 +130,18 @@ impl ops::Div<f32> for Vec2 {
 }
 
 impl fmt::Display for Vec2 {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_tuple("Vec2")
             .field(&self.x)
             .field(&self.y)
             .finish()
+    }
+}
+
+impl From<super::Uv> for super::Vec2 {
+    #[inline(always)]
+    fn from(super::Uv { u: x, v: y }: super::Uv) -> Self {
+        super::Vec2 { x, y }
     }
 }
