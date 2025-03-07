@@ -4,7 +4,7 @@ use wgpu::util::DeviceExt;
 pub struct RoundedRectangle {
     pub color: crate::Color,
     pub position: crate::Vec2,
-    pub size: crate::Vec2,
+    pub size: crate::Size,
     pub top_left_radius: f32,
     pub top_right_radius: f32,
     pub bottom_left_radius: f32,
@@ -33,7 +33,8 @@ impl super::Primitive for RoundedRectangle {
         let shader_module =
             crate::shaders::create_rectangle(device);
 
-        let max = f32::min(self.size.x, self.size.y) * 0.54;
+        let max =
+            f32::min(self.size.width, self.size.height) * 0.54;
 
         let tl = self.top_left_radius.clamp(0., max);
         let tr = self.top_right_radius.clamp(0., max);
@@ -44,16 +45,16 @@ impl super::Primitive for RoundedRectangle {
             color: self.color,
             center_tl: crate::Vec2 { x: tl, y: tl },
             center_tr: crate::Vec2 {
-                x: self.size.x - tr,
+                x: self.size.width - tr,
                 y: tr,
             },
             center_bl: crate::Vec2 {
                 x: bl,
-                y: self.size.y - bl,
+                y: self.size.height - bl,
             },
             center_br: crate::Vec2 {
-                x: self.size.x - br,
-                y: self.size.y - br,
+                x: self.size.width - br,
+                y: self.size.height - br,
             },
             radius_tl: tl,
             radius_tr: tr,
@@ -188,24 +189,27 @@ impl super::Primitive for RoundedRectangle {
                 ],
                 [
                     crate::Vec2::new(
-                        self.position.x + self.size.x,
+                        self.position.x + self.size.width,
                         self.position.y,
                     ),
-                    crate::Vec2::new(self.size.x, 0.),
+                    crate::Vec2::new(self.size.width, 0.),
                 ],
                 [
                     crate::Vec2::new(
-                        self.position.x + self.size.x,
-                        self.position.y + self.size.y,
+                        self.position.x + self.size.width,
+                        self.position.y + self.size.height,
                     ),
-                    crate::Vec2::new(self.size.x, self.size.y),
+                    crate::Vec2::new(
+                        self.size.width,
+                        self.size.height,
+                    ),
                 ],
                 [
                     crate::Vec2::new(
                         self.position.x,
-                        self.position.y + self.size.y,
+                        self.position.y + self.size.height,
                     ),
-                    crate::Vec2::new(0., self.size.y),
+                    crate::Vec2::new(0., self.size.height),
                 ],
             ];
 
