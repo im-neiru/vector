@@ -5,10 +5,7 @@ pub struct RoundedRectangle {
     pub color: crate::Color,
     pub position: crate::Vec2,
     pub size: crate::Size,
-    pub top_left_radius: f32,
-    pub top_right_radius: f32,
-    pub bottom_left_radius: f32,
-    pub bottom_right_radius: f32,
+    pub radius: crate::BorderRadius,
 }
 
 pub struct RoundedRectangleState {
@@ -38,10 +35,10 @@ impl super::Primitive for RoundedRectangle {
         let max =
             f32::min(self.size.width, self.size.height) * 0.5;
 
-        let tl = self.top_left_radius.clamp(0., max);
-        let tr = self.top_right_radius.clamp(0., max);
-        let bl = self.bottom_left_radius.clamp(0., max);
-        let br = self.bottom_right_radius.clamp(0., max);
+        let tl = self.radius.top_left.clamp(0., max);
+        let tr = self.radius.top_right.clamp(0., max);
+        let bl = self.radius.bottom_left.clamp(0., max);
+        let br = self.radius.bottom_right.clamp(0., max);
 
         let fs_uniform = FsUniform {
             color: self.color,

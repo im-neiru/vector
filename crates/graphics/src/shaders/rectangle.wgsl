@@ -33,7 +33,7 @@ fn vs_main(
     var output: VsOutput;
 
     output.clip_position = vec4<f32>(mapped_pos, 0.0, 1.0);
-    output.uv = uv;
+    output.uv = vec2(uv.x, -uv.y);
     return output;
 }
 

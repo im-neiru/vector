@@ -1,3 +1,4 @@
+mod border_radius;
 mod charset;
 mod color;
 mod primitives;
@@ -7,6 +8,7 @@ mod size;
 mod uv;
 mod vec2;
 
+pub use border_radius::BorderRadius;
 pub use charset::{Charset, CharsetIter};
 pub use color::Color;
 pub use renderer::DrawContext;

@@ -85,13 +85,10 @@ impl DrawContext {
         );
 
         let rect1 = RoundedRectangle {
-            color: crate::Color::DODGER_BLUE,
+            color: crate::Color::oklch(0.446, 0.043, 257.281),
             position: crate::Vec2::new(130.0, 450.0),
             size: crate::Size::new(128.0, 128.0),
-            top_left_radius: 8.,
-            top_right_radius: 8.,
-            bottom_left_radius: 8.,
-            bottom_right_radius: 8.,
+            radius: crate::BorderRadius::top(8.),
         };
 
         let rect1 =
