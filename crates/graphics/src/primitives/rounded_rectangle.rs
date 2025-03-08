@@ -182,30 +182,22 @@ impl super::Primitive for RoundedRectangle {
                 ],
                 [
                     crate::Vec2::new(
-                        self.position.x
-                            + self.size.width
-                            + PADDING.x,
+                        self.position.x + self.size.width,
                         self.position.y - PADDING.y,
                     ),
                     crate::Vec2::new(half_u, -half_v),
                 ],
                 [
                     crate::Vec2::new(
-                        self.position.x
-                            + self.size.width
-                            + PADDING.x,
-                        self.position.y
-                            + self.size.height
-                            + PADDING.y,
+                        self.position.x + self.size.width,
+                        self.position.y + self.size.height,
                     ),
                     crate::Vec2::new(half_u, half_v),
                 ],
                 [
                     crate::Vec2::new(
                         self.position.x - PADDING.y,
-                        self.position.y
-                            + self.size.height
-                            + PADDING.y,
+                        self.position.y + self.size.height,
                     ),
                     crate::Vec2::new(-half_u, half_v),
                 ],

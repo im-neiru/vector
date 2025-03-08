@@ -10,7 +10,7 @@ pub struct DrawContext {
     target: Box<dyn super::Target>,
     u_transform: wgpu::Buffer,
     rect1: crate::primitives::RoundedRectangleState,
-    rect2: crate::primitives::RoundedRectangleState,
+
     update_transform: bool,
 }
 
@@ -85,43 +85,17 @@ impl DrawContext {
         );
 
         let rect1 = RoundedRectangle {
-            color: crate::Color::ORANGE_RED,
-            position: crate::Vec2::new(8.0, 8.0),
-            size: crate::Vec2::new(64.0, 96.0),
-            top_left_radius: 128.,
-            top_right_radius: 128.,
-            bottom_left_radius: 128.,
-            bottom_right_radius: 128.,
-        };
-
-        let rect2 = RoundedRectangle {
-            color: crate::Color::ORANGE,
-            position: crate::Vec2::new(150.0, 128.0),
-            size: crate::Vec2::new(128.0, 32.0),
-            top_left_radius: 32.,
-            top_right_radius: 32.,
-            bottom_left_radius: 32.,
-            bottom_right_radius: 32.,
+            color: crate::Color::DODGER_BLUE,
+            position: crate::Vec2::new(130.0, 450.0),
+            size: crate::Size::new(128.0, 128.0),
+            top_left_radius: 8.,
+            top_right_radius: 8.,
+            bottom_left_radius: 8.,
+            bottom_right_radius: 8.,
         };
 
         let rect1 =
             rect1.create_state(
-                &device,
-                target.format(),
-                &u_transform,
-                wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: std::num::NonZeroU64::new(
-                        std::mem::size_of::<
-                            super::TransformUniform,
-                        >() as u64,
-                    ),
-                },
-            );
-
-        let rect2 =
-            rect2.create_state(
                 &device,
                 target.format(),
                 &u_transform,
@@ -142,7 +116,7 @@ impl DrawContext {
             target,
             u_transform,
             rect1,
-            rect2,
+
             update_transform: false,
         })
     }
@@ -202,7 +176,6 @@ impl DrawContext {
             );
 
             self.rect1.draw(&mut render_pass);
-            self.rect2.draw(&mut render_pass);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
