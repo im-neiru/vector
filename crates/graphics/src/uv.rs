@@ -10,7 +10,6 @@ use std::ops::{Add, Div, Mul, Sub};
     bytemuck::Zeroable,
     bytemuck::Pod,
 )]
-
 pub struct Uv {
     pub u: f32,
     pub v: f32,
