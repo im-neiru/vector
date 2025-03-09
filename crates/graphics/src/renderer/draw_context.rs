@@ -3,6 +3,7 @@ use wgpu::util::DeviceExt;
 use crate::renderer::{
     binding_group_layouts::BindingGroupLayouts,
     pipelines::Pipelines,
+    primitive_store::PrimitiveStore,
     primitives::{self, Primitive},
     shaders::{
         ColorTargetStates, FragmentStates, ShaderModules,
@@ -23,6 +24,7 @@ pub struct DrawContext {
     rotate: f32,
     binding_group_layouts: BindingGroupLayouts,
     pipelines: Pipelines,
+    primitives: super::PrimitiveStore,
 }
 
 impl DrawContext {
@@ -141,6 +143,7 @@ impl DrawContext {
             rect_state,
             pipelines,
             rotate,
+            primitives: PrimitiveStore::new(),
         })
     }
 
@@ -238,5 +241,18 @@ impl DrawContext {
         }
 
         Ok(())
+    }
+
+    #[inline]
+    pub fn rounded_rectangle(
+        &mut self,
+        rounded_rectangle: crate::RoundedRectangle,
+    ) -> logging::Result<()> {
+        self.primitives.add(
+            &self.device,
+            &self.projection_buffer,
+            &mut self.binding_group_layouts,
+            rounded_rectangle,
+        )
     }
 }

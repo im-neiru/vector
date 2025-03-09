@@ -11,7 +11,7 @@ pub use border_radius::BorderRadius;
 pub use charset::{Charset, CharsetIter};
 pub use color::Color;
 pub use mat3::Mat3;
-pub use renderer::DrawContext;
+pub use renderer::*;
 pub use size::Size;
 pub use uv::Uv;
 pub use vec2::Vec2;
