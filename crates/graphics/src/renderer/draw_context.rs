@@ -1,17 +1,28 @@
 use wgpu::util::DeviceExt;
 
-use crate::primitives::{
-    Primitive, PrimitiveState, RoundedRectangle,
+use crate::renderer::{
+    binding_group_layouts::BindingGroupLayouts,
+    pipelines::Pipelines,
+    primitives::{self, Primitive},
+    shaders::{
+        ColorTargetStates, FragmentStates, ShaderModules,
+        VertexStates,
+    },
 };
+
+use super::primitives::PrimitiveState;
 
 pub struct DrawContext {
     device: wgpu::Device,
     queue: wgpu::Queue,
     target: Box<dyn super::Target>,
-    u_transform: wgpu::Buffer,
-    rect1: crate::primitives::RoundedRectangleState,
-
-    update_transform: bool,
+    projection_buffer: wgpu::Buffer,
+    update_projection: bool,
+    rect: primitives::RoundedRectangle,
+    rect_state: primitives::RoundedRectangleState,
+    rotate: f32,
+    binding_group_layouts: BindingGroupLayouts,
+    pipelines: Pipelines,
 }
 
 impl DrawContext {
@@ -72,59 +83,77 @@ impl DrawContext {
         #[cfg(debug_assertions)]
         println!("Backend: {}", adapter.get_info().backend);
 
-        let u_transform =
-            super::TransformUniform::new(width, height);
-
-        let u_transform = device.create_buffer_init(
+        let projection_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("u_transform"),
-                contents: bytemuck::cast_slice(&[u_transform]),
+                contents: bytemuck::cast_slice(&[
+                    target.projection()
+                ]),
                 usage: wgpu::BufferUsages::UNIFORM
                     | wgpu::BufferUsages::COPY_DST,
             },
         );
 
-        let rect1 = RoundedRectangle {
-            color: crate::Color::oklch(0.446, 0.043, 257.281),
-            position: crate::Vec2::new(130.0, 450.0),
-            size: crate::Size::new(128.0, 128.0),
-            radius: crate::BorderRadius::top(8.),
+        let rotate = 0.0f32;
+        let rect = primitives::RoundedRectangle {
+            color: crate::Color::DODGER_BLUE,
+            position: crate::Vec2::splat(128.) * 0.5
+                + crate::Vec2::new(512., 360.),
+            size: crate::Size::square(400.),
+            radius: crate::BorderRadius::all(16.),
+            z: 0.,
+            transform: crate::Mat3::rotation_z(
+                (rotate).to_radians(),
+            ),
         };
 
-        let rect1 =
-            rect1.create_state(
-                &device,
-                target.format(),
-                &u_transform,
-                wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: std::num::NonZeroU64::new(
-                        std::mem::size_of::<
-                            super::TransformUniform,
-                        >() as u64,
-                    ),
-                },
-            );
+        let shader_modules = ShaderModules::new(&device);
+        let targets = ColorTargetStates::new(target.format());
+
+        let mut binding_group_layouts =
+            BindingGroupLayouts::new(&device);
+
+        let vertex_states = VertexStates::new(&shader_modules);
+        let fragment_states =
+            FragmentStates::new(&shader_modules, &targets);
+
+        let pipelines = Pipelines::new(
+            &device,
+            &binding_group_layouts,
+            &vertex_states,
+            &fragment_states,
+        );
+
+        let rect_state = rect.create_state(
+            &device,
+            &projection_buffer,
+            &mut binding_group_layouts,
+        )?;
 
         Ok(Self {
             device,
             queue,
             target,
-            u_transform,
-            rect1,
-
-            update_transform: false,
+            projection_buffer,
+            update_projection: false,
+            binding_group_layouts,
+            rect,
+            rect_state,
+            pipelines,
+            rotate,
         })
     }
 
     #[inline]
     pub fn resize(&mut self, width: u32, height: u32) {
         self.target.resize(&self.device, width, height);
-        self.update_transform = true;
+        self.update_projection = true;
     }
 
-    pub fn draw(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn draw(
+        &mut self,
+        delta: f32,
+    ) -> Result<(), wgpu::SurfaceError> {
         let (output, view) = self.target.get_output()?;
 
         let mut encoder = self.device.create_command_encoder(
@@ -133,16 +162,16 @@ impl DrawContext {
             },
         );
 
-        if self.update_transform {
-            let u_transform = self.target.u_transform();
+        if self.update_projection {
+            let projection = self.target.projection();
 
             self.queue.write_buffer(
-                &self.u_transform,
+                &self.projection_buffer,
                 0,
-                bytemuck::cast_slice(&[u_transform]),
+                bytemuck::cast_slice(&[projection]),
             );
 
-            self.update_transform = false;
+            self.update_projection = false;
         }
 
         {
@@ -172,7 +201,34 @@ impl DrawContext {
                 },
             );
 
-            self.rect1.draw(&mut render_pass);
+            self.rect_state.draw(
+                &mut render_pass,
+                &mut self.binding_group_layouts,
+                &mut self.pipelines,
+            );
+        }
+
+        {
+            self.rotate += (15. * delta).clamp(0., 360.);
+
+            self.queue.write_buffer(
+                &self.rect_state.emit_quad_uv,
+                0,
+                bytemuck::cast_slice(&[
+                    super::uniforms::EmitQuadUv {
+                        transform: (crate::Mat3::rotation_y(
+                            self.rotate.to_radians(),
+                        )
+                            * crate::Mat3::rotation_z(
+                                self.rotate.to_radians(),
+                            ))
+                        .into(),
+                        position: self.rect.position,
+                        z: self.rect.z,
+                        struct_pad: 0.,
+                    },
+                ]),
+            );
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

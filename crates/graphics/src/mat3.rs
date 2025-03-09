@@ -232,11 +232,23 @@ impl Default for Mat3 {
     }
 }
 
-use std::ops::Mul;
-impl Mul for Mat3 {
+impl std::ops::Mul for Mat3 {
     type Output = Self;
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
         self.multiply(rhs)
+    }
+}
+
+impl From<Mat3> for [[f32; 4]; 3] {
+    #[inline]
+    fn from(val: Mat3) -> Self {
+        let Mat3(m) = val;
+
+        [
+            [m[0][0], m[0][1], m[0][2], 0.0],
+            [m[1][0], m[1][1], m[1][2], 0.0],
+            [m[2][0], m[2][1], m[2][2], 1.0],
+        ]
     }
 }

@@ -8,9 +8,31 @@ use winit::{
 
 use crate::window_state::WindowState;
 
+use std::time::Instant;
+
+pub struct DeltaCounter {
+    last_frame: Instant,
+}
+
+impl DeltaCounter {
+    pub fn new() -> Self {
+        Self {
+            last_frame: Instant::now(),
+        }
+    }
+
+    pub fn tick(&mut self) -> f32 {
+        let now = Instant::now();
+        let delta = now.duration_since(self.last_frame);
+        self.last_frame = now;
+        delta.as_secs_f32()
+    }
+}
+
 pub struct App {
     wgpu_instance: wgpu::Instance,
     main_window: Option<WindowState>,
+    counter: DeltaCounter,
 }
 
 impl App {
@@ -26,6 +48,7 @@ impl App {
                 },
             ),
             main_window: None,
+            counter: DeltaCounter::new(),
         }
     }
 
@@ -35,7 +58,7 @@ impl App {
         logging::set_panic_hook();
 
         let ev = EventLoop::new()?;
-        ev.set_control_flow(ControlFlow::Wait);
+        ev.set_control_flow(ControlFlow::Poll);
         ev.run_app(&mut self)
     }
 }
@@ -43,6 +66,8 @@ impl App {
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.main_window.is_none() {
+            event_loop.set_control_flow(ControlFlow::Poll);
+
             self.main_window = Some({
                 use rwh_05::HasRawWindowHandle;
 
@@ -102,8 +127,9 @@ impl ApplicationHandler for App {
             RedrawRequested => {
                 if let Some(state) = self.main_window.as_mut() {
                     if state.is_matched(window_id) {
+                        let delta = self.counter.tick();
                         if let Err(err) =
-                            state.draw_context.draw()
+                            state.draw_context.draw(delta)
                         {
                             use wgpu::SurfaceError::*;
                             match err {
@@ -125,6 +151,8 @@ impl ApplicationHandler for App {
                                 _ => (),
                             }
                         }
+
+                        state.window.request_redraw();
                     }
                 }
             }

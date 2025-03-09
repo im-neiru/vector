@@ -1,3 +1,5 @@
+use super::uniforms::Projection;
+
 pub(crate) struct Headless {
     extent: wgpu::Extent3d,
     texture: wgpu::Texture,
@@ -41,11 +43,8 @@ impl super::Target for Headless {
     }
 
     #[inline]
-    fn u_transform(&self) -> super::TransformUniform {
-        super::TransformUniform::new(
-            self.extent.width,
-            self.extent.height,
-        )
+    fn projection(&self) -> Projection {
+        Projection::new(self.extent.width, self.extent.height)
     }
 }
 

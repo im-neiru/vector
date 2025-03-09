@@ -15,5 +15,5 @@ pub(in crate::renderer) trait Target {
 
     fn format(&self) -> wgpu::TextureFormat;
 
-    fn u_transform(&self) -> super::TransformUniform;
+    fn projection(&self) -> super::uniforms::Projection;
 }

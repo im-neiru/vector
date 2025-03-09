@@ -65,4 +65,14 @@ impl BorderRadius {
             bottom_right: radius,
         }
     }
+
+    #[inline]
+    pub const fn clamp(self, min: f32, max: f32) -> Self {
+        Self {
+            top_left: self.top_left.clamp(min, max),
+            top_right: self.top_left.clamp(min, max),
+            bottom_left: self.top_left.clamp(min, max),
+            bottom_right: self.top_left.clamp(min, max),
+        }
+    }
 }

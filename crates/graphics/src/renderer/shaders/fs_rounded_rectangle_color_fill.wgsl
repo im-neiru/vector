@@ -1,9 +1,5 @@
-struct TransformUniform {
-    scale: vec2<f32>,
-    translate: vec2<f32>,
-}
 
-struct FsUniform {
+struct RoundedRectangleColorFill {
     color: vec4<f32>,    // Use this if you want to tint the shape.
     size: vec2<f32>,     // Size of the inner (non–padded) rounded rectangle.
     radius_tl: f32,      // Top–left corner radius.
@@ -13,29 +9,9 @@ struct FsUniform {
     padding: vec2<f32>,  // Extra padding.
 }
 
-struct VsOutput {
-    @builtin(position) clip_position: vec4<f32>,
-    @location(0) uv: vec2<f32>,
-}
 
-@group(0) @binding(0)
-var<uniform> transform_uniform: TransformUniform;
-
-@group(0) @binding(1)
-var<uniform> fs_uniform: FsUniform;
-
-@vertex
-fn vs_main(
-    @location(0) position: vec2<f32>, @location(1) uv: vec2<f32>
-) -> VsOutput {
-    let mapped_pos = (vec2(position.x, -position.y) + transform_uniform.translate) * transform_uniform.scale;
-
-    var output: VsOutput;
-
-    output.clip_position = vec4<f32>(mapped_pos, 0.0, 1.0);
-    output.uv = vec2(uv.x, -uv.y);
-    return output;
-}
+@group(1) @binding(0)
+var<uniform> inputs: RoundedRectangleColorFill;
 
 fn rounded_sdf(p: vec2<f32>, b: vec2<f32>, r: f32) -> f32 {
     let d = abs(p) - b + vec2<f32>(r);
@@ -43,17 +19,17 @@ fn rounded_sdf(p: vec2<f32>, b: vec2<f32>, r: f32) -> f32 {
 }
 
 fn pseudo_msdf(uv: vec2<f32>) -> vec3<f32> {
-    let half_size = fs_uniform.size * 0.5;
+    let half_size = inputs.size * 0.5;
 
     var r: f32 = 0.0;
     if uv.x >= 0.0 && uv.y >= 0.0 {
-        r = fs_uniform.radius_tr;
+        r = inputs.radius_tr;
     } else if uv.x < 0.0 && uv.y >= 0.0 {
-        r = fs_uniform.radius_tl;
+        r = inputs.radius_tl;
     } else if uv.x < 0.0 && uv.y < 0.0 {
-        r = fs_uniform.radius_bl;
+        r = inputs.radius_bl;
     } else {
-        r = fs_uniform.radius_br;
+        r = inputs.radius_br;
     }
 
     let sdf = rounded_sdf(uv, half_size, r);
@@ -73,9 +49,11 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     let anti_alias_factor = 0.6;
 
     let msdf_values = pseudo_msdf(uv);
+
+
     let signed_distance = median(msdf_values);
 
     let smoothing_threshold = fwidth(signed_distance) * anti_alias_factor;
     let alpha = 1.0 - smoothstep(-smoothing_threshold, smoothing_threshold, signed_distance);
-    return vec4(fs_uniform.color.rgb, fs_uniform.color.a * alpha);
+    return vec4(inputs.color.rgb, inputs.color.a * alpha);
 }

@@ -1,3 +1,5 @@
+use super::uniforms::Projection;
+
 pub(crate) struct Surfaced<'a> {
     pub(super) surface: wgpu::Surface<'a>,
     pub(super) config: wgpu::SurfaceConfiguration,
@@ -44,11 +46,8 @@ impl super::Target for Surfaced<'_> {
     }
 
     #[inline]
-    fn u_transform(&self) -> super::TransformUniform {
-        super::TransformUniform::new(
-            self.config.width,
-            self.config.height,
-        )
+    fn projection(&self) -> Projection {
+        Projection::new(self.config.width, self.config.height)
     }
 }
 
