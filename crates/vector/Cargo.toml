@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 ui = { package = "vector-ui", path = "../ui" }
+logging = { package = "vector-logging", path = "../logging" }

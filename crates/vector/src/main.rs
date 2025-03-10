@@ -1,3 +1,4 @@
 fn main() {
-    ui::App::new().run().unwrap();
+    logging::set_panic_hook();
+    ui::App::new().unwrap().run().unwrap();
 }

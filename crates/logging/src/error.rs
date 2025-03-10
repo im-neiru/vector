@@ -20,6 +20,13 @@ pub enum ErrorKind {
     SizeExceedMaxSize,
     #[error("Size cannot be negative")]
     NegativeSize,
+    #[error(
+        "Vulkan function named {function_name} returned error code {vk_code}"
+    )]
+    VulkanError {
+        function_name: &'static str,
+        vk_code: i32,
+    },
 }
 
 pub type Result<T> =

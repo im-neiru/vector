@@ -8,14 +8,15 @@ use winit::{
 
 use crate::window_state::WindowState;
 pub struct App {
+    instance: graphics::Instance,
     wgpu_instance: wgpu::Instance,
     main_window: Option<WindowState>,
 }
 
 impl App {
-    #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> logging::Result<Self> {
+        Ok(Self {
+            instance: graphics::Instance::new()?,
             wgpu_instance: wgpu::Instance::new(
                 &wgpu::InstanceDescriptor {
                     backends: wgpu::Backends::VULKAN,
@@ -25,14 +26,12 @@ impl App {
                 },
             ),
             main_window: None,
-        }
+        })
     }
 
     pub fn run(
         mut self,
     ) -> Result<(), winit::error::EventLoopError> {
-        logging::set_panic_hook();
-
         let ev = EventLoop::new()?;
         ev.set_control_flow(ControlFlow::Poll);
         ev.run_app(&mut self)
