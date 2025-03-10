@@ -1,6 +1,6 @@
 use crate::renderer::uniforms;
 
-pub(crate) struct BindingGroupLayouts {
+pub struct BindingGroupLayouts {
     pub(crate) vs_emit_quad_view: wgpu::BindGroupLayout,
     pub(crate) fs_rounded_rectangle_color_fill:
         wgpu::BindGroupLayout,

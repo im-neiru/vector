@@ -1,8 +1,10 @@
+use std::sync::Arc;
+
 use super::shaders::{FragmentStates, VertexStates};
 
-pub(crate) struct Pipelines {
+pub struct Pipelines {
     pub(crate) rounded_rectangle_color_fill:
-        wgpu::RenderPipeline,
+        Arc<wgpu::RenderPipeline>,
 }
 
 impl Pipelines {
@@ -25,7 +27,7 @@ impl Pipelines {
         );
 
         Self {
-            rounded_rectangle_color_fill: device
+            rounded_rectangle_color_fill: Arc::new(device
                 .create_render_pipeline(
                 &wgpu::RenderPipelineDescriptor {
                     label: Some(
@@ -46,7 +48,7 @@ impl Pipelines {
                     multiview: None,
                     cache: None,
                 },
-            ),
+            )),
         }
     }
 }

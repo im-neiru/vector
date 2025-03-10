@@ -2,15 +2,17 @@ use std::any::TypeId;
 
 use super::{
     binding_group_layouts::BindingGroupLayouts,
+    pipelines::Pipelines,
     primitives::{Primitive, PrimitiveState},
 };
 
 pub struct PrimitiveStore {
-    buckets: Vec<Bucket>,
+    buckets: Vec<RenderBucket>,
 }
 
-pub struct Bucket {
+pub struct RenderBucket {
     type_id: TypeId,
+    pipeline: std::sync::Arc<wgpu::RenderPipeline>,
     primitives: Vec<Box<dyn PrimitiveState>>,
 }
 
@@ -26,6 +28,7 @@ impl PrimitiveStore {
         device: &wgpu::Device,
         projection_buffer: &wgpu::Buffer,
         binding_group_layouts: &mut BindingGroupLayouts,
+        pipelines: &Pipelines,
         primitive: P,
     ) -> logging::Result<()>
     where
@@ -49,8 +52,11 @@ impl PrimitiveStore {
                     .push(Box::new(state));
             }
             Err(index) => {
-                let new_bucket = Bucket {
+                let pipeline = P::get_pipeline(pipelines);
+
+                let new_bucket = RenderBucket {
                     type_id,
+                    pipeline,
                     primitives: vec![Box::new(state)],
                 };
                 self.buckets.insert(index, new_bucket);
@@ -58,5 +64,20 @@ impl PrimitiveStore {
         }
 
         Ok(())
+    }
+
+    pub fn render(
+        &mut self,
+        render_pass: &mut wgpu::RenderPass,
+        binding_group_layouts: &BindingGroupLayouts,
+    ) {
+        for bucket in self.buckets.iter_mut() {
+            render_pass.set_pipeline(&bucket.pipeline);
+
+            for primitive in bucket.primitives.iter_mut() {
+                primitive
+                    .draw(render_pass, binding_group_layouts);
+            }
+        }
     }
 }

@@ -27,6 +27,14 @@ const PADDING: crate::Vec2 = crate::Vec2::splat(12.);
 
 impl super::Primitive for RoundedRectangle {
     type State = RoundedRectangleState;
+    type Mutator = RoundedRectangleMutator;
+
+    #[inline]
+    fn get_pipeline(
+        pipelines: &Pipelines,
+    ) -> std::sync::Arc<wgpu::RenderPipeline> {
+        pipelines.rounded_rectangle_color_fill.clone()
+    }
 
     fn create_state(
         self,
@@ -147,13 +155,8 @@ impl super::PrimitiveState for RoundedRectangleState {
     fn draw(
         &mut self,
         render_pass: &mut wgpu::RenderPass<'_>,
-        binding_group_layouts: &mut BindingGroupLayouts,
-        pipelines: &mut Pipelines,
+        binding_group_layouts: &BindingGroupLayouts,
     ) {
-        render_pass.set_pipeline(
-            &pipelines.rounded_rectangle_color_fill,
-        );
-
         render_pass
             .set_vertex_buffer(0, self.vertex_buffer.slice(..));
 
@@ -178,3 +181,5 @@ impl super::PrimitiveState for RoundedRectangleState {
         render_pass.draw_indexed(0..self.index_count, 0, 0..1);
     }
 }
+
+pub struct RoundedRectangleMutator {}

@@ -7,32 +7,9 @@ use winit::{
 };
 
 use crate::window_state::WindowState;
-
-use std::time::Instant;
-
-pub struct DeltaCounter {
-    last_frame: Instant,
-}
-
-impl DeltaCounter {
-    pub fn new() -> Self {
-        Self {
-            last_frame: Instant::now(),
-        }
-    }
-
-    pub fn tick(&mut self) -> f32 {
-        let now = Instant::now();
-        let delta = now.duration_since(self.last_frame);
-        self.last_frame = now;
-        delta.as_secs_f32()
-    }
-}
-
 pub struct App {
     wgpu_instance: wgpu::Instance,
     main_window: Option<WindowState>,
-    counter: DeltaCounter,
 }
 
 impl App {
@@ -48,7 +25,6 @@ impl App {
                 },
             ),
             main_window: None,
-            counter: DeltaCounter::new(),
         }
     }
 
@@ -127,9 +103,8 @@ impl ApplicationHandler for App {
             RedrawRequested => {
                 if let Some(state) = self.main_window.as_mut() {
                     if state.is_matched(window_id) {
-                        let delta = self.counter.tick();
                         if let Err(err) =
-                            state.draw_context.draw(delta)
+                            state.draw_context.draw()
                         {
                             use wgpu::SurfaceError::*;
                             match err {

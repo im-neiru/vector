@@ -2,6 +2,11 @@ use crate::renderer::{BindingGroupLayouts, Pipelines};
 
 pub trait Primitive {
     type State: PrimitiveState;
+    type Mutator;
+
+    fn get_pipeline(
+        pipelines: &Pipelines,
+    ) -> std::sync::Arc<wgpu::RenderPipeline>;
 
     fn create_state(
         self,
@@ -15,7 +20,6 @@ pub trait PrimitiveState {
     fn draw(
         &mut self,
         render_pass: &mut wgpu::RenderPass<'_>,
-        binding_group_layouts: &mut BindingGroupLayouts,
-        pipelines: &mut Pipelines,
+        binding_group_layouts: &BindingGroupLayouts,
     );
 }

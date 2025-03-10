@@ -17,4 +17,4 @@ use surfaced::Surfaced;
 use target::Target;
 
 pub use draw_context::DrawContext;
-pub use primitives::RoundedRectangle;
+pub use primitives::{Primitive, RoundedRectangle};

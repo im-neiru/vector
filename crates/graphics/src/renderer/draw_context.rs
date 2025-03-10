@@ -4,14 +4,11 @@ use crate::renderer::{
     binding_group_layouts::BindingGroupLayouts,
     pipelines::Pipelines,
     primitive_store::PrimitiveStore,
-    primitives::{self, Primitive},
     shaders::{
         ColorTargetStates, FragmentStates, ShaderModules,
         VertexStates,
     },
 };
-
-use super::primitives::PrimitiveState;
 
 pub struct DrawContext {
     device: wgpu::Device,
@@ -19,9 +16,6 @@ pub struct DrawContext {
     target: Box<dyn super::Target>,
     projection_buffer: wgpu::Buffer,
     update_projection: bool,
-    rect: primitives::RoundedRectangle,
-    rect_state: primitives::RoundedRectangleState,
-    rotate: f32,
     binding_group_layouts: BindingGroupLayouts,
     pipelines: Pipelines,
     primitives: super::PrimitiveStore,
@@ -96,23 +90,10 @@ impl DrawContext {
             },
         );
 
-        let rotate = 0.0f32;
-        let rect = primitives::RoundedRectangle {
-            color: crate::Color::DODGER_BLUE,
-            position: crate::Vec2::splat(128.) * 0.5
-                + crate::Vec2::new(512., 360.),
-            size: crate::Size::square(400.),
-            radius: crate::BorderRadius::all(16.),
-            z: 0.,
-            transform: crate::Mat3::rotation_z(
-                (rotate).to_radians(),
-            ),
-        };
-
         let shader_modules = ShaderModules::new(&device);
         let targets = ColorTargetStates::new(target.format());
 
-        let mut binding_group_layouts =
+        let binding_group_layouts =
             BindingGroupLayouts::new(&device);
 
         let vertex_states = VertexStates::new(&shader_modules);
@@ -126,12 +107,6 @@ impl DrawContext {
             &fragment_states,
         );
 
-        let rect_state = rect.create_state(
-            &device,
-            &projection_buffer,
-            &mut binding_group_layouts,
-        )?;
-
         Ok(Self {
             device,
             queue,
@@ -139,10 +114,7 @@ impl DrawContext {
             projection_buffer,
             update_projection: false,
             binding_group_layouts,
-            rect,
-            rect_state,
             pipelines,
-            rotate,
             primitives: PrimitiveStore::new(),
         })
     }
@@ -153,10 +125,7 @@ impl DrawContext {
         self.update_projection = true;
     }
 
-    pub fn draw(
-        &mut self,
-        delta: f32,
-    ) -> Result<(), wgpu::SurfaceError> {
+    pub fn draw(&mut self) -> Result<(), wgpu::SurfaceError> {
         let (output, view) = self.target.get_output()?;
 
         let mut encoder = self.device.create_command_encoder(
@@ -204,33 +173,9 @@ impl DrawContext {
                 },
             );
 
-            self.rect_state.draw(
+            self.primitives.render(
                 &mut render_pass,
-                &mut self.binding_group_layouts,
-                &mut self.pipelines,
-            );
-        }
-
-        {
-            self.rotate += (15. * delta).clamp(0., 360.);
-
-            self.queue.write_buffer(
-                &self.rect_state.emit_quad_uv,
-                0,
-                bytemuck::cast_slice(&[
-                    super::uniforms::EmitQuadUv {
-                        transform: (crate::Mat3::rotation_y(
-                            self.rotate.to_radians(),
-                        )
-                            * crate::Mat3::rotation_z(
-                                self.rotate.to_radians(),
-                            ))
-                        .into(),
-                        position: self.rect.position,
-                        z: self.rect.z,
-                        struct_pad: 0.,
-                    },
-                ]),
+                &self.binding_group_layouts,
             );
         }
 
@@ -244,15 +189,19 @@ impl DrawContext {
     }
 
     #[inline]
-    pub fn rounded_rectangle(
+    pub fn push<P>(
         &mut self,
-        rounded_rectangle: crate::RoundedRectangle,
-    ) -> logging::Result<()> {
+        primitive: P,
+    ) -> logging::Result<()>
+    where
+        P: crate::Primitive + 'static,
+    {
         self.primitives.add(
             &self.device,
             &self.projection_buffer,
             &mut self.binding_group_layouts,
-            rounded_rectangle,
+            &self.pipelines,
+            primitive,
         )
     }
 }
