@@ -8,7 +8,7 @@ pub(crate) struct Headless {
 impl super::Target for Headless {
     fn resize(
         &mut self,
-        _: &wgpu::Device,
+        device: &wgpu::Device,
         width: u32,
         height: u32,
     ) {
@@ -22,6 +22,9 @@ impl super::Target for Headless {
 
         self.extent.width = width;
         self.extent.height = height;
+
+        self.texture =
+            Self::create_texture(device, self.extent);
     }
 
     fn get_output(
@@ -60,19 +63,26 @@ impl Headless {
             depth_or_array_layers: 1,
         };
 
-        let texture =
-            device.create_texture(&wgpu::TextureDescriptor {
-                label: Some("Headless Render Target"),
-                size: extent,
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Bgra8Unorm,
-                usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                    | wgpu::TextureUsages::COPY_SRC,
-                view_formats: &[],
-            });
+        let texture = Self::create_texture(device, extent);
 
         Box::new(Self { texture, extent })
+    }
+
+    #[inline]
+    fn create_texture(
+        device: &wgpu::Device,
+        extent: wgpu::Extent3d,
+    ) -> wgpu::Texture {
+        device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Headless Render Target"),
+            size: extent,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Bgra8Unorm,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
+        })
     }
 }
