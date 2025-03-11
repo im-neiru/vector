@@ -292,7 +292,8 @@ impl Instance {
                 .iter()
                 .enumerate() .find_map(|(index, info)| {
                     let supports_graphic_and_surface =
-                        info.queue_flags.contains(vk::QueueFlags::GRAPHICS)
+                        info.queue_flags.contains(vk::QueueFlags::GRAPHICS) &&
+                        info.queue_flags.contains(vk::QueueFlags::COMPUTE)
                             && self.surface_loader
                                 .get_physical_device_surface_support(
                                     *device,
