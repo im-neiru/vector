@@ -20,6 +20,10 @@ pub enum ErrorKind {
     SizeExceedMaxSize,
     #[error("Size cannot be negative")]
     NegativeSize,
+    #[error("Display handle error: {0}")]
+    DisplayHandle(winit::raw_window_handle::HandleError),
+    #[error("Window platform is not supported")]
+    UnsupportedWindow,
     #[error(
         "Vulkan function named {function_name} returned error code {vk_code}"
     )]

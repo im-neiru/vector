@@ -8,7 +8,7 @@ use winit::{
 
 use crate::window_state::WindowState;
 pub struct App {
-    instance: graphics::Instance,
+    instance: Option<graphics::Instance>,
     wgpu_instance: wgpu::Instance,
     main_window: Option<WindowState>,
 }
@@ -16,7 +16,7 @@ pub struct App {
 impl App {
     pub fn new() -> logging::Result<Self> {
         Ok(Self {
-            instance: graphics::Instance::new()?,
+            instance: None,
             wgpu_instance: wgpu::Instance::new(
                 &wgpu::InstanceDescriptor {
                     backends: wgpu::Backends::VULKAN,
@@ -41,7 +41,21 @@ impl App {
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.main_window.is_none() {
-            event_loop.set_control_flow(ControlFlow::Poll);
+            let _instance = match self.instance.as_mut() {
+                Some(instance) => instance,
+                None => {
+                    self.instance = Some(
+                        graphics::Instance::new(event_loop)
+                            .unwrap_report(),
+                    );
+
+                    unsafe {
+                        self.instance
+                            .as_mut()
+                            .unwrap_unchecked()
+                    }
+                }
+            };
 
             self.main_window = Some({
                 use winit::raw_window_handle_05::HasRawWindowHandle;
