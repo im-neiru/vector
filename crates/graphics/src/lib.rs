@@ -3,6 +3,8 @@ mod charset;
 mod color;
 mod instance;
 mod mat3;
+mod spirv;
+
 // mod renderer;
 mod renderers;
 mod size;
@@ -14,7 +16,6 @@ pub use charset::{Charset, CharsetIter};
 pub use color::Color;
 pub use instance::Instance;
 pub use mat3::Mat3;
-// pub use renderer::*;
 pub use renderers::UiRenderer;
 pub use size::Size;
 pub use uv::Uv;
