@@ -10,7 +10,6 @@ use ash::khr::win32_surface;
 pub struct Instance {
     entry: ash::Entry,
     instance: ash::Instance,
-    surface_loader: khr::surface::Instance,
     #[cfg(target_family = "windows")]
     win32_instance: win32_surface::Instance,
 }
@@ -156,9 +155,6 @@ impl Instance {
                 })?
         };
 
-        let surface_loader =
-            khr::surface::Instance::new(&entry, &instance);
-
         match display_handle {
             #[cfg(any(
                 target_os = "linux",
@@ -195,7 +191,6 @@ impl Instance {
                     entry,
                     instance,
                     win32_instance,
-                    surface_loader,
                 }
             }),
             _ => logging::ErrorKind::UnsupportedWindow
@@ -204,19 +199,27 @@ impl Instance {
     }
 
     #[inline]
-    pub fn create_surface_with_window<H>(
+    pub fn create_ui_renderer<H>(
         &self,
         handle: &H,
         width: u32,
         height: u32,
-    ) -> logging::Result<crate::Surface>
+    ) -> logging::Result<crate::UiRenderer>
     where
         H: HasDisplayHandle + HasWindowHandle,
     {
         let surface_khr = self.create_surface_khr(handle)?;
 
-        let (physical_device, queue_family_index) =
-            self.select_physical_device(surface_khr)?;
+        let surface_loader = khr::surface::Instance::new(
+            &self.entry,
+            &self.instance,
+        );
+
+        let (physical_device, queue_family_index) = self
+            .select_physical_device(
+                surface_khr,
+                &surface_loader,
+            )?;
 
         let features = vk::PhysicalDeviceFeatures {
             shader_clip_distance: 1,
@@ -255,7 +258,8 @@ impl Instance {
         };
 
         let surface_format = unsafe {
-        self.surface_loader
+
+        surface_loader
             .get_physical_device_surface_formats(
                 physical_device,
                 surface_khr,
@@ -279,8 +283,7 @@ impl Instance {
         )?;
 
         let surface_capabilities = unsafe {
-            self
-        .surface_loader
+            surface_loader
         .get_physical_device_surface_capabilities(
             physical_device, surface_khr,
         ).map_err(|err| {
@@ -318,7 +321,7 @@ impl Instance {
         };
 
         let present_modes = unsafe {
-            self.surface_loader
+            surface_loader
                 .get_physical_device_surface_present_modes(
                     physical_device,
                     surface_khr,
@@ -362,7 +365,7 @@ impl Instance {
                 .clipped(true)
                 .image_array_layers(1);
 
-        let swapchain = unsafe {
+        let swapchain_khr = unsafe {
             swapchain_loader
                 .create_swapchain(&swapchain_create_info, None)
                 .map_err(|err| {
@@ -374,7 +377,15 @@ impl Instance {
                 })?
         };
 
-        Ok(crate::Surface { surface_khr })
+        Ok(crate::UiRenderer {
+            context: crate::renderers::Context {
+                surface_loader,
+                swapchain_loader,
+                surface_khr,
+                swapchain_khr,
+                device,
+            },
+        })
     }
 }
 
@@ -437,6 +448,7 @@ impl Instance {
     fn select_physical_device(
         &self,
         surface_khr: vk::SurfaceKHR,
+        surface_loader: &khr::surface::Instance,
     ) -> logging::Result<(vk::PhysicalDevice, u32)> {
         let physical_devices = unsafe {
             self.instance.enumerate_physical_devices().map_err(
@@ -459,7 +471,7 @@ impl Instance {
                     let supports_graphic_and_surface =
                         info.queue_flags.contains(vk::QueueFlags::GRAPHICS) &&
                         info.queue_flags.contains(vk::QueueFlags::COMPUTE)
-                            && self.surface_loader
+                            && surface_loader
                                 .get_physical_device_surface_support(
                                     *device,
                                     index as u32,
@@ -474,5 +486,13 @@ impl Instance {
                 }) }
         })
         .ok_or(logging::ErrorKind::NoCompatibleDevice.into_error())
+    }
+}
+
+impl Drop for Instance {
+    fn drop(&mut self) {
+        unsafe {
+            self.instance.destroy_instance(None);
+        };
     }
 }

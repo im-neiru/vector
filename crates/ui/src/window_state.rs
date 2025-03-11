@@ -5,7 +5,7 @@ use winit::{
 
 pub struct WindowState {
     pub(crate) window: Window,
-    pub(crate) surface: graphics::Surface,
+    pub(crate) renderer: graphics::UiRenderer,
 }
 
 impl WindowState {
@@ -23,7 +23,7 @@ impl WindowState {
 
         let surface = {
             let size = window.inner_size();
-            instance.create_surface_with_window(
+            instance.create_ui_renderer(
                 &window,
                 size.width,
                 size.height,
@@ -61,7 +61,10 @@ impl WindowState {
         //     transform: graphics::Mat3::IDENTITY,
         // })?;
 
-        Ok(Self { window, surface })
+        Ok(Self {
+            window,
+            renderer: surface,
+        })
     }
 
     #[inline(always)]
