@@ -377,6 +377,99 @@ impl Instance {
                 })?
         };
 
+        let pool_create_info = vk::CommandPoolCreateInfo::default()
+                .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
+                .queue_family_index(queue_family_index);
+
+        let command_pool = unsafe {
+            device
+                .create_command_pool(&pool_create_info, None)
+                .map_err(|err| {
+                    logging::ErrorKind::VulkanError {
+                        function_name: "create_command_pool",
+                        vk_code: err.as_raw(),
+                    }
+                    .into_error()
+                })?
+        };
+
+        let command_buffer_allocate_info =
+            vk::CommandBufferAllocateInfo::default()
+                .command_buffer_count(2)
+                .command_pool(command_pool)
+                .level(vk::CommandBufferLevel::PRIMARY);
+
+        let command_buffers = unsafe {
+            device
+                .allocate_command_buffers(
+                    &command_buffer_allocate_info,
+                )
+                .map_err(|err| {
+                    logging::ErrorKind::VulkanError {
+                        function_name: "allocate_command_buffers",
+                        vk_code: err.as_raw(),
+                    }
+                    .into_error()
+                })?
+        };
+        let setup_command_buffer = command_buffers[0];
+        let draw_command_buffer = command_buffers[1];
+
+        let present_images = unsafe {
+            swapchain_loader
+                .get_swapchain_images(swapchain_khr)
+                .map_err(|err| {
+                    logging::ErrorKind::VulkanError {
+                        function_name: "get_swapchain_images",
+                        vk_code: err.as_raw(),
+                    }
+                    .into_error()
+                })?
+        };
+
+        let present_image_views = present_images
+            .iter()
+            .map(|&image| {
+                let create_view_info =
+                    vk::ImageViewCreateInfo::default()
+                        .view_type(vk::ImageViewType::TYPE_2D)
+                        .format(surface_format.format)
+                        .components(vk::ComponentMapping {
+                            r: vk::ComponentSwizzle::R,
+                            g: vk::ComponentSwizzle::G,
+                            b: vk::ComponentSwizzle::B,
+                            a: vk::ComponentSwizzle::A,
+                        })
+                        .subresource_range(
+                            vk::ImageSubresourceRange {
+                                aspect_mask:
+                                    vk::ImageAspectFlags::COLOR,
+                                base_mip_level: 0,
+                                level_count: 1,
+                                base_array_layer: 0,
+                                layer_count: 1,
+                            },
+                        )
+                        .image(image);
+
+                unsafe {
+                    device
+                        .create_image_view(
+                            &create_view_info,
+                            None,
+                        )
+                        .map_err(|err| {
+                            logging::ErrorKind::VulkanError {
+                        function_name: "create_image_view",
+                        vk_code: err.as_raw(),
+                    }
+                    .into_error()
+                        })
+                }
+            })
+            .collect::<logging::Result<Box<[vk::ImageView]>>>(
+            )?;
+
         Ok(crate::UiRenderer {
             context: crate::renderers::Context {
                 surface_loader,
@@ -384,6 +477,11 @@ impl Instance {
                 surface_khr,
                 swapchain_khr,
                 device,
+                present_queue,
+                command_pool,
+                setup_command_buffer,
+                draw_command_buffer,
+                present_image_views,
             },
         })
     }
@@ -467,7 +565,8 @@ impl Instance {
                     *device,
                 )
                 .iter()
-                .enumerate() .find_map(|(index, info)| {
+                .enumerate()
+                .find_map(|(index, info)| {
                     let supports_graphic_and_surface =
                         info.queue_flags.contains(vk::QueueFlags::GRAPHICS) &&
                         info.queue_flags.contains(vk::QueueFlags::COMPUTE)
