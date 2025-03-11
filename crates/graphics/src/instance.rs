@@ -567,7 +567,7 @@ impl Instance {
                 .iter()
                 .enumerate()
                 .find_map(|(index, info)| {
-                    let supports_graphic_and_surface =
+                    let is_qualify =
                         info.queue_flags.contains(vk::QueueFlags::GRAPHICS) &&
                         info.queue_flags.contains(vk::QueueFlags::COMPUTE)
                             && surface_loader
@@ -576,8 +576,9 @@ impl Instance {
                                     index as u32,
                                     surface_khr,
                                 )
-                                .unwrap();
-                    if supports_graphic_and_surface {
+                                .unwrap_or(false);
+
+                    if is_qualify {
                         Some((*device, index as u32))
                     } else {
                         None
