@@ -22,8 +22,13 @@ pub enum ErrorKind {
     NegativeSize,
     #[error("Display handle error: {0}")]
     DisplayHandle(winit::raw_window_handle::HandleError),
+    #[error("Window handle error: {0}")]
+    WindowHandle(winit::raw_window_handle::HandleError),
     #[error("Window platform is not supported")]
     UnsupportedWindow,
+    #[cfg(target_family = "windows")]
+    #[error("HINSTANCE is null")]
+    HInstanceIsNull,
     #[error(
         "Vulkan function named {function_name} returned error code {vk_code}"
     )]

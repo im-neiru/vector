@@ -9,7 +9,6 @@ use winit::{
 use crate::window_state::WindowState;
 pub struct App {
     instance: Option<graphics::Instance>,
-    wgpu_instance: wgpu::Instance,
     main_window: Option<WindowState>,
 }
 
@@ -17,14 +16,6 @@ impl App {
     pub fn new() -> logging::Result<Self> {
         Ok(Self {
             instance: None,
-            wgpu_instance: wgpu::Instance::new(
-                &wgpu::InstanceDescriptor {
-                    backends: wgpu::Backends::VULKAN,
-                    flags: wgpu::InstanceFlags::default(),
-                    backend_options:
-                        wgpu::BackendOptions::default(),
-                },
-            ),
             main_window: None,
         })
     }
@@ -41,7 +32,7 @@ impl App {
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.main_window.is_none() {
-            let _instance = match self.instance.as_mut() {
+            let instance = match self.instance.as_mut() {
                 Some(instance) => instance,
                 None => {
                     self.instance = Some(
@@ -61,7 +52,7 @@ impl ApplicationHandler for App {
                 use winit::raw_window_handle_05::HasRawWindowHandle;
 
                 let state = WindowState::new(
-                    &self.wgpu_instance,
+                    instance,
                     WindowAttributes::default()
                         .with_title("Vector")
                         .with_active(true)
@@ -107,42 +98,42 @@ impl ApplicationHandler for App {
             Resized(PhysicalSize { width, height }) => {
                 if let Some(state) = self.main_window.as_mut() {
                     if state.is_matched(window_id) {
-                        state
-                            .draw_context
-                            .resize(width, height);
+                        // state
+                        //     .draw_context
+                        //     .resize(width, height);
                     }
                 }
             }
             RedrawRequested => {
-                if let Some(state) = self.main_window.as_mut() {
-                    if state.is_matched(window_id) {
-                        if let Err(err) =
-                            state.draw_context.draw()
-                        {
-                            use wgpu::SurfaceError::*;
-                            match err {
-                                Outdated | Lost => {
-                                    let PhysicalSize {
-                                        width,
-                                        height,
-                                    } = state
-                                        .window
-                                        .inner_size();
+                // if let Some(state) = self.main_window.as_mut() {
+                //     if state.is_matched(window_id) {
+                //         if let Err(err) =
+                //             state.draw_context.draw()
+                //         {
+                //             use wgpu::SurfaceError::*;
+                //             match err {
+                //                 Outdated | Lost => {
+                //                     let PhysicalSize {
+                //                         width,
+                //                         height,
+                //                     } = state
+                //                         .window
+                //                         .inner_size();
 
-                                    state
-                                        .draw_context
-                                        .resize(width, height);
-                                }
-                                OutOfMemory => {
-                                    event_loop.exit();
-                                }
-                                _ => (),
-                            }
-                        }
+                //                     state
+                //                         .draw_context
+                //                         .resize(width, height);
+                //                 }
+                //                 OutOfMemory => {
+                //                     event_loop.exit();
+                //                 }
+                //                 _ => (),
+                //             }
+                //         }
 
-                        state.window.request_redraw();
-                    }
-                }
+                //         state.window.request_redraw();
+                //     }
+                // }
             }
             _ => (),
         }

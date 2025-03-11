@@ -5,6 +5,7 @@ mod instance;
 mod mat3;
 mod renderer;
 mod size;
+mod surface;
 mod uv;
 mod vec2;
 
@@ -15,5 +16,6 @@ pub use instance::Instance;
 pub use mat3::Mat3;
 pub use renderer::*;
 pub use size::Size;
+pub use surface::Surface;
 pub use uv::Uv;
 pub use vec2::Vec2;
