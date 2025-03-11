@@ -3,8 +3,6 @@ members = ["crates/*"]
 resolver = "3"
 
 [workspace.dependencies]
-rwh_05 = { package = "raw-window-handle", version = "0.5.2" }
-rwh_06 = { package = "raw-window-handle", version = "0.6.2" }
 winit = { version = "0.30.9", features = ["rwh_05"] }
 native-dialog = "0.7.0"
 wgpu = "24.0.1"

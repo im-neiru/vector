@@ -5,12 +5,10 @@ edition = "2024"
 
 [dependencies]
 native-dialog = { workspace = true }
-rwh_05 = { workspace = true }
-rwh_06 = { workspace = true }
 winit = { workspace = true }
 pollster = { workspace = true }
 wgpu = { workspace = true }
 
-utils = { package = "vector-utils", path = "../utils", features = ["rwh"] }
+utils = { package = "vector-utils", path = "../utils" }
 graphics = { package = "vector-graphics", path = "../graphics" }
 logging = { package = "vector-logging", path = "../logging" }

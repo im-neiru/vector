@@ -1715,6 +1715,7 @@ dependencies = [
  "ttf-parser",
  "vector-logging",
  "wgpu",
+ "winit",
 ]
 
 [[package]]
@@ -1722,7 +1723,6 @@ name = "vector-logging"
 version = "0.1.0"
 dependencies = [
  "native-dialog",
- "raw-window-handle 0.5.2",
  "thiserror 2.0.12",
  "vector-utils",
  "wgpu",
@@ -1735,8 +1735,6 @@ version = "0.1.0"
 dependencies = [
  "native-dialog",
  "pollster",
- "raw-window-handle 0.5.2",
- "raw-window-handle 0.6.2",
  "vector-graphics",
  "vector-logging",
  "vector-utils",
@@ -1747,10 +1745,6 @@ dependencies = [
 [[package]]
 name = "vector-utils"
 version = "0.1.0"
-dependencies = [
- "raw-window-handle 0.5.2",
- "raw-window-handle 0.6.2",
-]
 
 [[package]]
 name = "version_check"

@@ -1,9 +1,7 @@
 use std::sync::{LazyLock, Mutex};
 
-use rwh_05::RawWindowHandle;
-
 struct PanicHandlerState {
-    owner: Option<RawWindowHandle>,
+    owner: Option<winit::raw_window_handle_05::RawWindowHandle>,
 }
 
 unsafe impl Sync for PanicHandlerState {}
@@ -46,6 +44,10 @@ pub fn set_panic_hook() {
     }));
 }
 
-pub fn set_dialog_box_owner(handle: Option<RawWindowHandle>) {
+pub fn set_dialog_box_owner(
+    handle: Option<
+        winit::raw_window_handle_05::RawWindowHandle,
+    >,
+) {
     STATE.lock().unwrap().owner = handle;
 }

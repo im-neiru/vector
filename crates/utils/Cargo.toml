@@ -4,8 +4,3 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-rwh_05 = { workspace = true, optional = true }
-rwh_06 = { workspace = true, optional = true }
-
-[features]
-rwh = ["dep:rwh_05", "dep:rwh_06"]

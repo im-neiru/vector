@@ -44,7 +44,7 @@ impl ApplicationHandler for App {
             event_loop.set_control_flow(ControlFlow::Poll);
 
             self.main_window = Some({
-                use rwh_05::HasRawWindowHandle;
+                use winit::raw_window_handle_05::HasRawWindowHandle;
 
                 let state = WindowState::new(
                     &self.wgpu_instance,
