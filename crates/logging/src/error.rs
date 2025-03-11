@@ -38,6 +38,8 @@ pub enum ErrorKind {
     },
     #[error("No compatible Vulkan physical device")]
     NoCompatibleDevice,
+    #[error("Unsupported surface format")]
+    UnsupportedSurfaceFormat,
 }
 
 pub type Result<T> =

@@ -65,6 +65,15 @@ const EXTENSIONS_WAYLAND: &[*const i8] = &[
     khr::wayland_surface::NAME.as_ptr(),
 ];
 
+const EXTENSIONS_DEVICE: &[*const i8] = &[
+    khr::swapchain::NAME.as_ptr(),
+    khr::external_memory::NAME.as_ptr(),
+    #[cfg(target_family = "unix")]
+    khr::external_memory_fd::NAME.as_ptr(),
+    #[cfg(target_family = "windows")]
+    khr::external_memory_win32::NAME.as_ptr(),
+];
+
 impl Instance {
     pub fn new<H>(display_handle: &H) -> logging::Result<Self>
     where
@@ -204,6 +213,82 @@ impl Instance {
     {
         let surface_khr = self.create_surface_khr(handle)?;
 
+        let (physical_device, queue_family_index) =
+            self.select_physical_device(surface_khr)?;
+
+        let features = vk::PhysicalDeviceFeatures {
+            shader_clip_distance: 1,
+            ..Default::default()
+        };
+
+        let queue_info = vk::DeviceQueueCreateInfo::default()
+            .queue_family_index(queue_family_index)
+            .queue_priorities(&[1.0]);
+
+        let device = unsafe {
+            self.instance
+                .create_device(
+                    physical_device,
+                    &vk::DeviceCreateInfo::default()
+                        .queue_create_infos(
+                            std::slice::from_ref(&queue_info),
+                        )
+                        .enabled_features(&features)
+                        .enabled_extension_names(
+                            EXTENSIONS_DEVICE,
+                        ),
+                    None,
+                )
+                .map_err(|err| {
+                    logging::ErrorKind::VulkanError {
+                        function_name: "create_device",
+                        vk_code: err.as_raw(),
+                    }
+                    .into_error()
+                })?
+        };
+
+        let present_queue = unsafe {
+            device.get_device_queue(queue_family_index, 0)
+        };
+
+        let surface_format = unsafe {
+        self.surface_loader
+            .get_physical_device_surface_formats(
+                physical_device,
+                surface_khr,
+            )
+            .map_err(|err| {
+                logging::ErrorKind::VulkanError {
+                    function_name: "get_physical_device_surface_formats",
+                    vk_code: err.as_raw(),
+                }
+                .into_error()
+            })?
+        }
+        .iter()
+        .find(|format| {
+            format.format == vk::Format::B8G8R8A8_UNORM
+        })
+        .ok_or(
+            logging::ErrorKind::UnsupportedSurfaceFormat
+                .into_error(),
+        )?;
+
+        let surface_capabilities = unsafe {
+            self
+        .surface_loader
+        .get_physical_device_surface_capabilities(
+            physical_device, surface_khr,
+        ).map_err(|err| {
+            logging::ErrorKind::VulkanError {
+                function_name: "get_physical_device_surface_capabilities",
+                vk_code: err.as_raw(),
+            }
+            .into_error()
+        })
+        }?;
+
         Ok(crate::Surface { surface_khr })
     }
 }
@@ -260,11 +345,6 @@ impl Instance {
             }
         };
 
-        let (physical_device, queue_family_index) =
-            self.select_physical_device(surface_khr)?;
-
-        // TODO: create logical device and queue
-
         Ok(surface_khr)
     }
 
@@ -272,7 +352,7 @@ impl Instance {
     fn select_physical_device(
         &self,
         surface_khr: vk::SurfaceKHR,
-    ) -> logging::Result<(vk::PhysicalDevice, usize)> {
+    ) -> logging::Result<(vk::PhysicalDevice, u32)> {
         let physical_devices = unsafe {
             self.instance.enumerate_physical_devices().map_err(
                 |err| {
@@ -302,7 +382,7 @@ impl Instance {
                                 )
                                 .unwrap();
                     if supports_graphic_and_surface {
-                        Some((*device, index))
+                        Some((*device, index as u32))
                     } else {
                         None
                     }
