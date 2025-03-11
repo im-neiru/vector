@@ -207,6 +207,8 @@ impl Instance {
     pub fn create_surface_with_window<H>(
         &self,
         handle: &H,
+        width: u32,
+        height: u32,
     ) -> logging::Result<crate::Surface>
     where
         H: HasDisplayHandle + HasWindowHandle,
@@ -266,10 +268,11 @@ impl Instance {
                 .into_error()
             })?
         }
-        .iter()
+        .into_iter()
         .find(|format| {
             format.format == vk::Format::B8G8R8A8_UNORM
         })
+
         .ok_or(
             logging::ErrorKind::UnsupportedSurfaceFormat
                 .into_error(),
@@ -286,8 +289,90 @@ impl Instance {
                 vk_code: err.as_raw(),
             }
             .into_error()
-        })
-        }?;
+        })?
+        };
+
+        let mut desired_image_count =
+            surface_capabilities.min_image_count + 1;
+        if surface_capabilities.max_image_count > 0
+            && desired_image_count
+                > surface_capabilities.max_image_count
+        {
+            desired_image_count =
+                surface_capabilities.max_image_count;
+        }
+
+        let surface_resolution =
+            match surface_capabilities.current_extent.width {
+                u32::MAX => vk::Extent2D { width, height },
+                _ => surface_capabilities.current_extent,
+            };
+
+        let pre_transform = if surface_capabilities
+            .supported_transforms
+            .contains(vk::SurfaceTransformFlagsKHR::IDENTITY)
+        {
+            vk::SurfaceTransformFlagsKHR::IDENTITY
+        } else {
+            surface_capabilities.current_transform
+        };
+
+        let present_modes = unsafe {
+            self.surface_loader
+                .get_physical_device_surface_present_modes(
+                    physical_device,
+                    surface_khr,
+                )
+                .map_err(|err| {
+                    logging::ErrorKind::VulkanError {
+                        function_name: "get_physical_device_surface_present_modes",
+                        vk_code: err.as_raw(),
+                    }
+                    .into_error()
+                })?
+        };
+
+        let present_mode = present_modes
+            .iter()
+            .cloned()
+            .find(|&mode| mode == vk::PresentModeKHR::MAILBOX)
+            .unwrap_or(vk::PresentModeKHR::FIFO);
+
+        let swapchain_loader = khr::swapchain::Device::new(
+            &self.instance,
+            &device,
+        );
+
+        let swapchain_create_info =
+            vk::SwapchainCreateInfoKHR::default()
+                .surface(surface_khr)
+                .min_image_count(desired_image_count)
+                .image_color_space(surface_format.color_space)
+                .image_format(surface_format.format)
+                .image_extent(surface_resolution)
+                .image_usage(
+                    vk::ImageUsageFlags::COLOR_ATTACHMENT,
+                )
+                .image_sharing_mode(vk::SharingMode::EXCLUSIVE)
+                .pre_transform(pre_transform)
+                .composite_alpha(
+                    vk::CompositeAlphaFlagsKHR::OPAQUE,
+                )
+                .present_mode(present_mode)
+                .clipped(true)
+                .image_array_layers(1);
+
+        let swapchain = unsafe {
+            swapchain_loader
+                .create_swapchain(&swapchain_create_info, None)
+                .map_err(|err| {
+                    logging::ErrorKind::VulkanError {
+                        function_name: "create_swapchain",
+                        vk_code: err.as_raw(),
+                    }
+                    .into_error()
+                })?
+        };
 
         Ok(crate::Surface { surface_khr })
     }

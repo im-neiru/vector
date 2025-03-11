@@ -21,8 +21,14 @@ impl WindowState {
                     .into_error()
             })?;
 
-        let surface =
-            instance.create_surface_with_window(&window)?;
+        let surface = {
+            let size = window.inner_size();
+            instance.create_surface_with_window(
+                &window,
+                size.width,
+                size.height,
+            )?
+        };
 
         // let mut draw_context = pollster::block_on({
         //     let winit::dpi::PhysicalSize { width, height } =
