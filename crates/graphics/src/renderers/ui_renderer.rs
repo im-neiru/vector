@@ -1,5 +1,5 @@
-use ash::vk;
+use std::pin::Pin;
 
 pub struct UiRenderer {
-    pub(crate) context: super::Context,
+    pub(crate) context: Pin<Box<dyn super::Context>>,
 }

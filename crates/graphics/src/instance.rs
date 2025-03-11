@@ -1,3 +1,5 @@
+use std::pin::Pin;
+
 use ash::{khr, vk};
 use winit::raw_window_handle::{
     HasDisplayHandle, HasWindowHandle, RawDisplayHandle,
@@ -471,18 +473,20 @@ impl Instance {
             )?;
 
         Ok(crate::UiRenderer {
-            context: crate::renderers::Context {
-                surface_loader,
-                swapchain_loader,
-                surface_khr,
-                swapchain_khr,
-                device,
-                present_queue,
-                command_pool,
-                setup_command_buffer,
-                draw_command_buffer,
-                present_image_views,
-            },
+            context: Box::pin(
+                crate::renderers::SurfacedContext {
+                    surface_loader,
+                    swapchain_loader,
+                    surface_khr,
+                    swapchain_khr,
+                    device,
+                    present_queue,
+                    command_pool,
+                    setup_command_buffer,
+                    draw_command_buffer,
+                    present_image_views,
+                },
+            ),
         })
     }
 }
