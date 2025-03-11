@@ -86,6 +86,7 @@ impl Instance {
                                     APP_VERSION,
                                 )
                                 .application_name(APP_NAME)
+                                .engine_version(APP_VERSION)
                                 .engine_name(ENGINE_NAME),
                         )
                         .enabled_layer_names(LAYER_NAMES)
