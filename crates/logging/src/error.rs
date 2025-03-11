@@ -36,6 +36,8 @@ pub enum ErrorKind {
         function_name: &'static str,
         vk_code: i32,
     },
+    #[error("No compatible Vulkan physical device")]
+    NoCompatibleDevice,
 }
 
 pub type Result<T> =
