@@ -1,3 +1,4 @@
+mod allocation_callbacks;
 mod border_radius;
 mod charset;
 mod color;

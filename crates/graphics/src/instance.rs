@@ -9,6 +9,8 @@ use winit::raw_window_handle::{
 #[cfg(target_family = "windows")]
 use ash::khr::win32_surface;
 
+use crate::allocation_callbacks::ALLOCATION_CALLBACKS;
+
 pub struct Instance {
     entry: ash::Entry,
     instance: ash::Instance,
@@ -146,7 +148,7 @@ impl Instance {
                                 _ => return logging::ErrorKind::UnsupportedWindow.into_result()
                             },
                         ),
-                    None,
+                    ALLOCATION_CALLBACKS,
                 )
                 .map_err(|err| {
                     logging::ErrorKind::VulkanError {
@@ -244,7 +246,7 @@ impl Instance {
                         .enabled_extension_names(
                             EXTENSIONS_DEVICE,
                         ),
-                    None,
+                    ALLOCATION_CALLBACKS,
                 )
                 .map_err(|err| {
                     logging::ErrorKind::VulkanError {
@@ -369,7 +371,10 @@ impl Instance {
 
         let swapchain_khr = unsafe {
             swapchain_loader
-                .create_swapchain(&swapchain_create_info, None)
+                .create_swapchain(
+                    &swapchain_create_info,
+                    ALLOCATION_CALLBACKS,
+                )
                 .map_err(|err| {
                     logging::ErrorKind::VulkanError {
                         function_name: "create_swapchain",
@@ -385,7 +390,10 @@ impl Instance {
 
         let command_pool = unsafe {
             device
-                .create_command_pool(&pool_create_info, None)
+                .create_command_pool(
+                    &pool_create_info,
+                    ALLOCATION_CALLBACKS,
+                )
                 .map_err(|err| {
                     logging::ErrorKind::VulkanError {
                         function_name: "create_command_pool",
@@ -459,7 +467,7 @@ impl Instance {
                     device
                         .create_image_view(
                             &create_view_info,
-                            None,
+                            ALLOCATION_CALLBACKS,
                         )
                         .map_err(|err| {
                             logging::ErrorKind::VulkanError {
@@ -525,7 +533,7 @@ impl Instance {
                     ash::vk::Win32SurfaceCreateInfoKHR::default()
                     .hinstance(handle.hinstance.ok_or(logging::ErrorKind::HInstanceIsNull.into_error())?.into())
                     .hwnd(handle.hwnd.into()),
-                    None,
+                    ALLOCATION_CALLBACKS,
                 ).map_err(|err|
                     logging::ErrorKind::VulkanError {
                         function_name: "create_win32_surface",
@@ -593,7 +601,8 @@ impl Instance {
 impl Drop for Instance {
     fn drop(&mut self) {
         unsafe {
-            self.instance.destroy_instance(None);
+            self.instance
+                .destroy_instance(ALLOCATION_CALLBACKS);
         };
     }
 }

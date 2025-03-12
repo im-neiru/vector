@@ -1,5 +1,7 @@
 use ash::vk::ShaderModule;
 
+use crate::allocation_callbacks::ALLOCATION_CALLBACKS;
+
 pub(super) struct VertexShaders {
     pub(super) quad_emit_uv: ShaderModule,
 }
@@ -26,8 +28,10 @@ impl VertexShaders {
 
     pub(super) unsafe fn destroy(self, device: &ash::Device) {
         unsafe {
-            device
-                .destroy_shader_module(self.quad_emit_uv, None)
+            device.destroy_shader_module(
+                self.quad_emit_uv,
+                ALLOCATION_CALLBACKS,
+            )
         };
     }
 }
@@ -53,7 +57,7 @@ impl FragmentShaders {
         unsafe {
             device.destroy_shader_module(
                 self.rounded_rectangle_color_fill,
-                None,
+                ALLOCATION_CALLBACKS,
             )
         };
     }

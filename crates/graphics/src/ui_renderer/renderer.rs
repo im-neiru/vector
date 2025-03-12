@@ -1,8 +1,7 @@
-use std::collections::BTreeMap;
-
 use ash::{khr, vk};
 
 use crate::{
+    allocation_callbacks::ALLOCATION_CALLBACKS,
     spirv::{fs::FragmentShaderId, vs::VertexShaderId},
     vk_object_store::VkObjectStore,
 };
@@ -85,19 +84,28 @@ impl Drop for UiRenderer {
                 .unwrap_report();
 
             for &image_view in self.present_image_views.iter() {
-                self.device
-                    .destroy_image_view(image_view, None);
+                self.device.destroy_image_view(
+                    image_view,
+                    ALLOCATION_CALLBACKS,
+                );
             }
 
-            self.device
-                .destroy_command_pool(self.command_pool, None);
+            self.device.destroy_command_pool(
+                self.command_pool,
+                ALLOCATION_CALLBACKS,
+            );
 
             self.render_pipelines.destroy(|pipeline| {
-                self.device.destroy_pipeline(pipeline, None)
+                self.device.destroy_pipeline(
+                    pipeline,
+                    ALLOCATION_CALLBACKS,
+                )
             });
 
-            self.swapchain_loader
-                .destroy_swapchain(self.swapchain_khr, None);
+            self.swapchain_loader.destroy_swapchain(
+                self.swapchain_khr,
+                ALLOCATION_CALLBACKS,
+            );
 
             if let Some(vs) = self.vs.take() {
                 vs.destroy(&self.device);
@@ -107,10 +115,12 @@ impl Drop for UiRenderer {
                 fs.destroy(&self.device);
             }
 
-            self.device.destroy_device(None);
+            self.device.destroy_device(ALLOCATION_CALLBACKS);
 
-            self.surface_loader
-                .destroy_surface(self.surface_khr, None);
+            self.surface_loader.destroy_surface(
+                self.surface_khr,
+                ALLOCATION_CALLBACKS,
+            );
         }
     }
 }
