@@ -17,8 +17,8 @@ pub struct UiRenderer {
     setup_command_buffer: vk::CommandBuffer,
     draw_command_buffer: vk::CommandBuffer,
     present_image_views: Box<[vk::ImageView]>,
-    vs: Option<super::shaders::VertexShaders>,
-    fs: Option<super::shaders::FragmentShaders>,
+    vs: VkObjectStore<VertexShaderId, vk::ShaderModule>,
+    fs: VkObjectStore<FragmentShaderId, vk::ShaderModule>,
     render_pipelines:
         VkObjectStore<RenderPipelineId, vk::Pipeline>,
 }
@@ -45,9 +45,8 @@ impl UiRenderer {
     ) -> logging::Result<Self> {
         use super::shaders::*;
 
-        let vs = Some(unsafe { VertexShaders::new(&device)? });
-        let fs =
-            Some(unsafe { FragmentShaders::new(&device)? });
+        let vs = VkObjectStore::default();
+        let fs = VkObjectStore::default();
 
         Ok(Self {
             surface_loader,
@@ -107,13 +106,19 @@ impl Drop for UiRenderer {
                 ALLOCATION_CALLBACKS,
             );
 
-            if let Some(vs) = self.vs.take() {
-                vs.destroy(&self.device);
-            }
+            self.vs.destroy(|shader_module| {
+                self.device.destroy_shader_module(
+                    shader_module,
+                    ALLOCATION_CALLBACKS,
+                )
+            });
 
-            if let Some(fs) = self.fs.take() {
-                fs.destroy(&self.device);
-            }
+            self.fs.destroy(|shader_module| {
+                self.device.destroy_shader_module(
+                    shader_module,
+                    ALLOCATION_CALLBACKS,
+                )
+            });
 
             self.device.destroy_device(ALLOCATION_CALLBACKS);
 
