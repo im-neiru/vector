@@ -60,10 +60,13 @@ impl FragmentShaders {
 }
 
 #[inline(always)]
-unsafe fn create_shader_module(
+unsafe fn create_shader_module<T>(
     device: &ash::Device,
-    source: &crate::spirv::ShaderSource,
-) -> logging::Result<ShaderModule> {
+    source: &crate::spirv::ShaderSource<T>,
+) -> logging::Result<ShaderModule>
+where
+    T: std::hash::Hash + PartialEq + PartialOrd + Eq + Ord,
+{
     unsafe {
         device
             .create_shader_module(&source.create_info(), None)

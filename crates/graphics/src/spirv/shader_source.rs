@@ -1,13 +1,18 @@
+use std::hash::Hash;
+
 use ash::vk::TaggedStructure;
 
-pub struct ShaderSource<'a> {
-    pub(crate) id: u32,
+pub struct ShaderSource<'a, T>
+where
+    T: Hash + PartialEq + PartialOrd + Eq + Ord,
+{
+    pub(crate) id: T,
     pub(super) bytes: &'a [u8],
 }
 
 #[macro_export(local_inner_macros)]
 macro_rules! include_spirv {
-    ($id:literal, $path:expr) => {
+    ($id:expr, $path:expr) => {
         super::ShaderSource {
             id: $id,
             bytes: ::std::include_bytes!($path),
@@ -15,7 +20,10 @@ macro_rules! include_spirv {
     };
 }
 
-impl<'a> ShaderSource<'a> {
+impl<'a, T> ShaderSource<'a, T>
+where
+    T: Hash + PartialEq + PartialOrd + Eq + Ord,
+{
     #[inline]
     pub(crate) fn create_info(
         &'a self,
