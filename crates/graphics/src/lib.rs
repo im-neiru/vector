@@ -3,13 +3,12 @@ mod charset;
 mod color;
 mod instance;
 mod mat3;
-mod spirv;
-
-// mod renderer;
 mod size;
+mod spirv;
 mod ui_renderer;
 mod uv;
 mod vec2;
+mod vk_object_store;
 
 pub use border_radius::BorderRadius;
 pub use charset::{Charset, CharsetIter};

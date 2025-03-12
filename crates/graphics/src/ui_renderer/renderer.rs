@@ -2,7 +2,10 @@ use std::collections::BTreeMap;
 
 use ash::{khr, vk};
 
-use crate::spirv::{fs::FragmentShaderId, vs::VertexShaderId};
+use crate::{
+    spirv::{fs::FragmentShaderId, vs::VertexShaderId},
+    vk_object_store::VkObjectStore,
+};
 
 pub struct UiRenderer {
     surface_loader: khr::surface::Instance,
@@ -18,9 +21,10 @@ pub struct UiRenderer {
     vs: Option<super::shaders::VertexShaders>,
     fs: Option<super::shaders::FragmentShaders>,
     render_pipelines:
-        Option<BTreeMap<RenderPipelineId, vk::Pipeline>>,
+        VkObjectStore<RenderPipelineId, vk::Pipeline>,
 }
 
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 struct RenderPipelineId {
     vs: VertexShaderId,
     fs: FragmentShaderId,
@@ -59,7 +63,7 @@ impl UiRenderer {
             present_image_views,
             vs,
             fs,
-            render_pipelines: None,
+            render_pipelines: VkObjectStore::default(),
         })
     }
 }
@@ -88,14 +92,9 @@ impl Drop for UiRenderer {
             self.device
                 .destroy_command_pool(self.command_pool, None);
 
-            if let Some(render_pipelines) =
-                self.render_pipelines.take()
-            {
-                for pipeline in render_pipelines.into_values() {
-                    self.device
-                        .destroy_pipeline(pipeline, None);
-                }
-            }
+            self.render_pipelines.destroy(|pipeline| {
+                self.device.destroy_pipeline(pipeline, None)
+            });
 
             self.swapchain_loader
                 .destroy_swapchain(self.swapchain_khr, None);
