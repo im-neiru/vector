@@ -9,6 +9,10 @@ fn compile_shaders() {
         let vertex_shaders =
             get_entries(shaderc::ShaderKind::Vertex);
 
+        if vertex_shaders.is_empty() {
+            return;
+        }
+
         let compiler = shaderc::Compiler::new().unwrap();
         let option = shaderc::CompileOptions::new().unwrap();
 
@@ -21,6 +25,10 @@ fn compile_shaders() {
         let fragment_shaders =
             get_entries(shaderc::ShaderKind::Fragment);
 
+        if fragment_shaders.is_empty() {
+            return;
+        }
+
         let compiler = shaderc::Compiler::new().unwrap();
         let option = shaderc::CompileOptions::new().unwrap();
 
@@ -32,6 +40,10 @@ fn compile_shaders() {
     let compute_handle = thread::spawn(move || {
         let compute_shaders =
             get_entries(shaderc::ShaderKind::Compute);
+
+        if compute_shaders.is_empty() {
+            return;
+        }
 
         let compiler = shaderc::Compiler::new().unwrap();
         let option = shaderc::CompileOptions::new().unwrap();
