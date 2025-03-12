@@ -261,40 +261,40 @@ impl Instance {
 
         let surface_format = unsafe {
 
-        surface_loader
-            .get_physical_device_surface_formats(
-                physical_device,
-                surface_khr,
-            )
-            .map_err(|err| {
+            surface_loader
+                .get_physical_device_surface_formats(
+                    physical_device,
+                    surface_khr,
+                )
+                .map_err(|err| {
+                    logging::ErrorKind::VulkanError {
+                        function_name: "get_physical_device_surface_formats",
+                        vk_code: err.as_raw(),
+                    }
+                    .into_error()
+                })?
+            }
+            .into_iter()
+            .find(|format| {
+                format.format == vk::Format::B8G8R8A8_UNORM
+            })
+
+            .ok_or(
+                logging::ErrorKind::UnsupportedSurfaceFormat
+                    .into_error(),
+            )?;
+
+        let surface_capabilities = unsafe {
+            surface_loader
+            .get_physical_device_surface_capabilities(
+                physical_device, surface_khr,
+            ).map_err(|err| {
                 logging::ErrorKind::VulkanError {
-                    function_name: "get_physical_device_surface_formats",
+                    function_name: "get_physical_device_surface_capabilities",
                     vk_code: err.as_raw(),
                 }
                 .into_error()
             })?
-        }
-        .into_iter()
-        .find(|format| {
-            format.format == vk::Format::B8G8R8A8_UNORM
-        })
-
-        .ok_or(
-            logging::ErrorKind::UnsupportedSurfaceFormat
-                .into_error(),
-        )?;
-
-        let surface_capabilities = unsafe {
-            surface_loader
-        .get_physical_device_surface_capabilities(
-            physical_device, surface_khr,
-        ).map_err(|err| {
-            logging::ErrorKind::VulkanError {
-                function_name: "get_physical_device_surface_capabilities",
-                vk_code: err.as_raw(),
-            }
-            .into_error()
-        })?
         };
 
         let mut desired_image_count =
@@ -324,17 +324,17 @@ impl Instance {
 
         let present_modes = unsafe {
             surface_loader
-                .get_physical_device_surface_present_modes(
-                    physical_device,
-                    surface_khr,
-                )
-                .map_err(|err| {
-                    logging::ErrorKind::VulkanError {
-                        function_name: "get_physical_device_surface_present_modes",
-                        vk_code: err.as_raw(),
-                    }
-                    .into_error()
-                })?
+                    .get_physical_device_surface_present_modes(
+                        physical_device,
+                        surface_khr,
+                    )
+                    .map_err(|err| {
+                        logging::ErrorKind::VulkanError {
+                            function_name: "get_physical_device_surface_present_modes",
+                            vk_code: err.as_raw(),
+                        }
+                        .into_error()
+                    })?
         };
 
         let present_mode = present_modes
@@ -380,8 +380,8 @@ impl Instance {
         };
 
         let pool_create_info = vk::CommandPoolCreateInfo::default()
-                .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
-                .queue_family_index(queue_family_index);
+                    .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
+                    .queue_family_index(queue_family_index);
 
         let command_pool = unsafe {
             device
@@ -403,17 +403,18 @@ impl Instance {
 
         let command_buffers = unsafe {
             device
-                .allocate_command_buffers(
-                    &command_buffer_allocate_info,
-                )
-                .map_err(|err| {
-                    logging::ErrorKind::VulkanError {
-                        function_name: "allocate_command_buffers",
-                        vk_code: err.as_raw(),
-                    }
-                    .into_error()
-                })?
+                    .allocate_command_buffers(
+                        &command_buffer_allocate_info,
+                    )
+                    .map_err(|err| {
+                        logging::ErrorKind::VulkanError {
+                            function_name: "allocate_command_buffers",
+                            vk_code: err.as_raw(),
+                        }
+                        .into_error()
+                    })?
         };
+
         let setup_command_buffer = command_buffers[0];
         let draw_command_buffer = command_buffers[1];
 
@@ -462,32 +463,28 @@ impl Instance {
                         )
                         .map_err(|err| {
                             logging::ErrorKind::VulkanError {
-                        function_name: "create_image_view",
-                        vk_code: err.as_raw(),
-                    }
-                    .into_error()
+                            function_name: "create_image_view",
+                            vk_code: err.as_raw(),
+                        }
+                        .into_error()
                         })
                 }
             })
             .collect::<logging::Result<Box<[vk::ImageView]>>>(
             )?;
 
-        Ok(crate::UiRenderer {
-            context: Box::pin(
-                crate::renderers::SurfacedContext {
-                    surface_loader,
-                    swapchain_loader,
-                    surface_khr,
-                    swapchain_khr,
-                    device,
-                    present_queue,
-                    command_pool,
-                    setup_command_buffer,
-                    draw_command_buffer,
-                    present_image_views,
-                },
-            ),
-        })
+        crate::UiRenderer::create(
+            surface_loader,
+            swapchain_loader,
+            surface_khr,
+            swapchain_khr,
+            device,
+            present_queue,
+            command_pool,
+            setup_command_buffer,
+            draw_command_buffer,
+            present_image_views,
+        )
     }
 }
 
