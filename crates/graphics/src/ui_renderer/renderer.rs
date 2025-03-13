@@ -1,4 +1,7 @@
-use ash::{khr, vk};
+use ash::{
+    khr,
+    vk::{self, ShaderModule},
+};
 
 use crate::{
     allocation_callbacks::ALLOCATION_CALLBACKS,
@@ -17,13 +20,17 @@ pub struct UiRenderer {
     setup_command_buffer: vk::CommandBuffer,
     draw_command_buffer: vk::CommandBuffer,
     present_image_views: Box<[vk::ImageView]>,
-    vs: VkObjectStore<VertexShaderId, vk::ShaderModule>,
-    fs: VkObjectStore<FragmentShaderId, vk::ShaderModule>,
+    vertex_shaders:
+        VkObjectStore<VertexShaderId, vk::ShaderModule>,
+    fragment_shaders:
+        VkObjectStore<FragmentShaderId, vk::ShaderModule>,
     render_pipelines:
         VkObjectStore<RenderPipelineId, vk::Pipeline>,
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord,
+)]
 struct RenderPipelineId {
     vs: VertexShaderId,
     fs: FragmentShaderId,
@@ -43,10 +50,17 @@ impl UiRenderer {
         draw_command_buffer: vk::CommandBuffer,
         present_image_views: Box<[vk::ImageView]>,
     ) -> logging::Result<Self> {
-        use super::shaders::*;
+        use crate::spirv::*;
 
-        let vs = VkObjectStore::default();
-        let fs = VkObjectStore::default();
+        let vertex_shaders = VkObjectStore::fill(
+            [vs::QUAD_EMIT_UV],
+            |source| create_shader_module(&device, &source),
+        )?;
+
+        let fragment_shaders = VkObjectStore::fill(
+            [fs::ROUNDED_RECTANGLE_COLOR_FILL],
+            |source| create_shader_module(&device, &source),
+        )?;
 
         Ok(Self {
             surface_loader,
@@ -59,8 +73,8 @@ impl UiRenderer {
             setup_command_buffer,
             draw_command_buffer,
             present_image_views,
-            vs,
-            fs,
+            vertex_shaders,
+            fragment_shaders,
             render_pipelines: VkObjectStore::default(),
         })
     }
@@ -106,14 +120,14 @@ impl Drop for UiRenderer {
                 ALLOCATION_CALLBACKS,
             );
 
-            self.vs.destroy(|shader_module| {
+            self.vertex_shaders.destroy(|shader_module| {
                 self.device.destroy_shader_module(
                     shader_module,
                     ALLOCATION_CALLBACKS,
                 )
             });
 
-            self.fs.destroy(|shader_module| {
+            self.fragment_shaders.destroy(|shader_module| {
                 self.device.destroy_shader_module(
                     shader_module,
                     ALLOCATION_CALLBACKS,
@@ -128,4 +142,36 @@ impl Drop for UiRenderer {
             );
         }
     }
+}
+
+#[inline(always)]
+fn create_shader_module<T>(
+    device: &ash::Device,
+    source: &crate::spirv::ShaderSource<T>,
+) -> logging::Result<(T, ShaderModule)>
+where
+    T: std::hash::Hash
+        + Copy
+        + Clone
+        + PartialEq
+        + PartialOrd
+        + Eq
+        + Ord,
+{
+    let module = unsafe {
+        device
+            .create_shader_module(
+                &source.create_info(),
+                ALLOCATION_CALLBACKS,
+            )
+            .map_err(|err| {
+                logging::ErrorKind::VulkanError {
+                    function_name: "create_shader_module",
+                    vk_code: err.as_raw(),
+                }
+                .into_error()
+            })?
+    };
+
+    Ok((source.id, module))
 }

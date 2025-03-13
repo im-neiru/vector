@@ -1,4 +1,6 @@
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord,
+)]
 pub(crate) enum FragmentShaderId {
     QuadEmitUv,
 }
