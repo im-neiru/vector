@@ -1,3 +1,4 @@
+mod render_pipelines;
 mod shader;
 
 pub(crate) use shader::FragmentShaderStore;

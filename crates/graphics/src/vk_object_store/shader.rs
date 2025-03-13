@@ -116,11 +116,11 @@ where
 
 impl VertexShaderStore {
     #[inline]
-    pub(crate) fn use_shader(
+    pub(crate) fn use_shader<'a>(
         &mut self,
         device: &ash::Device,
         source: &ShaderSource<crate::spirv::vs::VertexShaderId>,
-    ) -> logging::Result<vk::PipelineShaderStageCreateInfo>
+    ) -> logging::Result<vk::PipelineShaderStageCreateInfo<'a>>
     {
         let module =
             self.internal_use_shader(device, source)?;
@@ -144,8 +144,9 @@ impl FragmentShaderStore {
         source: &ShaderSource<
             crate::spirv::fs::FragmentShaderId,
         >,
-    ) -> logging::Result<vk::PipelineShaderStageCreateInfo>
-    {
+    ) -> logging::Result<
+        vk::PipelineShaderStageCreateInfo<'static>,
+    > {
         let module =
             self.internal_use_shader(device, source)?;
 
