@@ -17,6 +17,7 @@ impl
 {
     pub(crate) fn preload_pipelines<const N: usize>(
         device: &ash::Device,
+        render_pass: &vk::RenderPass,
         vertex_shaders: &mut super::VertexShaderStore,
         fragment_shaders: &mut super::FragmentShaderStore,
         sources: [(
@@ -31,6 +32,41 @@ impl
             >,
             // will add more later
         }
+
+        let multisample_state =
+            vk::PipelineMultisampleStateCreateInfo {
+                rasterization_samples:
+                    vk::SampleCountFlags::TYPE_1,
+                ..Default::default()
+            };
+
+        let color_blend_attachment_states =
+            [vk::PipelineColorBlendAttachmentState {
+                blend_enable: 0,
+                src_color_blend_factor:
+                    vk::BlendFactor::SRC_COLOR,
+                dst_color_blend_factor:
+                    vk::BlendFactor::ONE_MINUS_DST_COLOR,
+                color_blend_op: vk::BlendOp::ADD,
+                src_alpha_blend_factor: vk::BlendFactor::ZERO,
+                dst_alpha_blend_factor: vk::BlendFactor::ZERO,
+                alpha_blend_op: vk::BlendOp::ADD,
+                color_write_mask: vk::ColorComponentFlags::RGBA,
+            }];
+
+        let color_blend_state =
+            vk::PipelineColorBlendStateCreateInfo::default()
+                .logic_op(vk::LogicOp::CLEAR)
+                .attachments(&color_blend_attachment_states);
+
+        let dynamic_state = [
+            vk::DynamicState::VIEWPORT,
+            vk::DynamicState::SCISSOR,
+        ];
+
+        let dynamic_state =
+            vk::PipelineDynamicStateCreateInfo::default()
+                .dynamic_states(&dynamic_state);
 
         let mut deps = [Dependencies {
             stages: MaybeUninit::uninit(),
@@ -52,10 +88,14 @@ impl
 
             let stages_ptr = deps[index].stages.as_ptr();
 
-            infos[index] = infos[index].stages(unsafe {
-                stages_ptr.as_ref().unwrap_unchecked()
-                // will add more later
-            });
+            infos[index] = infos[index]
+                .stages(unsafe {
+                    stages_ptr.as_ref().unwrap_unchecked()
+                })
+                .multisample_state(&multisample_state)
+                .color_blend_state(&color_blend_state)
+                .dynamic_state(&dynamic_state)
+                .render_pass(*render_pass);
         }
 
         let pipelines = unsafe {
