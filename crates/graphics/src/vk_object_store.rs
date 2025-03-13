@@ -46,6 +46,8 @@ where
             }
         }
 
+        storage.sort_by(|a, b| a.key.cmp(&b.key));
+
         Ok(Self(Some(storage)))
     }
 
