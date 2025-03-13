@@ -1,15 +1,7 @@
 use std::ops::{Add, Div, Mul, Sub};
 
 #[repr(C)]
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    PartialEq,
-    bytemuck::Zeroable,
-    bytemuck::Pod,
-)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Uv {
     pub u: f32,
     pub v: f32,

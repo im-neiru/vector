@@ -1,15 +1,7 @@
 use std::{fmt, ops};
 
 #[repr(C)]
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    PartialEq,
-    bytemuck::Zeroable,
-    bytemuck::Pod,
-)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,

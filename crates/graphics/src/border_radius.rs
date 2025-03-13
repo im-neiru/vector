@@ -1,13 +1,5 @@
 #[repr(C)]
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    PartialEq,
-    bytemuck::Zeroable,
-    bytemuck::Pod,
-)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct BorderRadius {
     pub top_left: f32,
     pub top_right: f32,

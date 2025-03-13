@@ -1353,7 +1353,6 @@ name = "vector-graphics"
 version = "0.1.0"
 dependencies = [
  "ash",
- "bytemuck",
  "pollster",
  "shaderc",
  "ttf-parser",

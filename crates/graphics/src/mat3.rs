@@ -1,12 +1,5 @@
 #[repr(C)]
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    bytemuck::Zeroable,
-    bytemuck::Pod,
-)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Mat3([[f32; 3]; 3]);
 
 impl Mat3 {
