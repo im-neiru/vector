@@ -6,6 +6,5 @@ edition = "2024"
 [dependencies]
 thiserror = "2.0.12"
 native-dialog = { workspace = true }
-wgpu = { workspace = true }
 winit = { workspace = true }
 utils = { package = "vector-utils", path = "../utils" }

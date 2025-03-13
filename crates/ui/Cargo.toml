@@ -7,7 +7,6 @@ edition = "2024"
 native-dialog = { workspace = true }
 winit = { workspace = true }
 pollster = { workspace = true }
-wgpu = { workspace = true }
 
 utils = { package = "vector-utils", path = "../utils" }
 graphics = { package = "vector-graphics", path = "../graphics" }

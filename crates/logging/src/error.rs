@@ -10,12 +10,6 @@ pub struct Error<'a> {
 pub enum ErrorKind {
     #[error("Window create error: {0}")]
     WindowCreation(winit::error::OsError),
-    #[error("Surface create error: {0}")]
-    CreateSurface(wgpu::CreateSurfaceError),
-    #[error("No compatible wgpu adapter found")]
-    NoWgpuAdapter,
-    #[error("Request device error: {0}")]
-    RequestDeviceError(wgpu::RequestDeviceError),
     #[error("Size must not exceed `Size::MAX`")]
     SizeExceedMaxSize,
     #[error("Size cannot be negative")]

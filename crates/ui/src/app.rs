@@ -104,37 +104,7 @@ impl ApplicationHandler for App {
                     }
                 }
             }
-            RedrawRequested => {
-                // if let Some(state) = self.main_window.as_mut() {
-                //     if state.is_matched(window_id) {
-                //         if let Err(err) =
-                //             state.draw_context.draw()
-                //         {
-                //             use wgpu::SurfaceError::*;
-                //             match err {
-                //                 Outdated | Lost => {
-                //                     let PhysicalSize {
-                //                         width,
-                //                         height,
-                //                     } = state
-                //                         .window
-                //                         .inner_size();
-
-                //                     state
-                //                         .draw_context
-                //                         .resize(width, height);
-                //                 }
-                //                 OutOfMemory => {
-                //                     event_loop.exit();
-                //                 }
-                //                 _ => (),
-                //             }
-                //         }
-
-                //         state.window.request_redraw();
-                //     }
-                // }
-            }
+            RedrawRequested => {}
             _ => (),
         }
     }
