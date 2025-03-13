@@ -23,6 +23,7 @@ pub struct UiRenderer {
     fragment_shaders: FragmentShaderStore,
     render_pipelines:
         VkObjectStore<RenderPipelineId, vk::Pipeline>,
+    render_pass: Option<vk::RenderPass>,
 }
 
 #[derive(
@@ -40,6 +41,7 @@ impl UiRenderer {
         swapchain_loader: khr::swapchain::Device,
         surface_khr: vk::SurfaceKHR,
         swapchain_khr: vk::SwapchainKHR,
+        surface_format: vk::Format,
         device: ash::Device,
         present_queue: vk::Queue,
         command_pool: vk::CommandPool,
@@ -61,6 +63,51 @@ impl UiRenderer {
                 [fs::ROUNDED_RECTANGLE_COLOR_FILL],
             )?;
 
+        let render_pass = unsafe {
+            let color_attachment_refs = [vk::AttachmentReference {
+                attachment: 0,
+                layout: vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
+            }];
+
+            let attachments = [ vk::AttachmentDescription {
+                format: surface_format,
+                samples: vk::SampleCountFlags::TYPE_1,
+                load_op: vk::AttachmentLoadOp::CLEAR,
+                store_op: vk::AttachmentStoreOp::STORE,
+                final_layout: vk::ImageLayout::PRESENT_SRC_KHR,
+                ..Default::default()
+            }];
+
+            let dependencies = [vk::SubpassDependency {
+                src_subpass: vk::SUBPASS_EXTERNAL,
+                src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+                dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_READ
+                    | vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
+                dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+                ..Default::default()
+            }];
+
+
+            let subpasses = [vk::SubpassDescription::default()
+            .color_attachments(&color_attachment_refs)
+            .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)];
+
+            device.create_render_pass(
+                &vk::RenderPassCreateInfo::default()
+                .attachments(&attachments)
+                .dependencies(&dependencies)
+                .subpasses(&subpasses),
+                ALLOCATION_CALLBACKS,
+            )
+        }
+        .map_err(|err| {
+            logging::ErrorKind::VulkanError {
+                function_name: "create_render_pass",
+                vk_code: err.as_raw(),
+            }
+            .into_error()
+        })?;
+
         Ok(Self {
             surface_loader,
             swapchain_loader,
@@ -75,6 +122,7 @@ impl UiRenderer {
             vertex_shaders,
             fragment_shaders,
             render_pipelines: VkObjectStore::default(),
+            render_pass: Some(render_pass),
         })
     }
 }
@@ -113,6 +161,13 @@ impl Drop for UiRenderer {
                     ALLOCATION_CALLBACKS,
                 )
             });
+
+            if let Some(render_pass) = self.render_pass.take() {
+                self.device.destroy_render_pass(
+                    render_pass,
+                    ALLOCATION_CALLBACKS,
+                );
+            }
 
             self.swapchain_loader.destroy_swapchain(
                 self.swapchain_khr,

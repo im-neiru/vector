@@ -212,6 +212,8 @@ impl Instance {
     where
         H: HasDisplayHandle + HasWindowHandle,
     {
+        const PREFERRED_FORMAT: vk::Format =
+            vk::Format::B8G8R8A8_UNORM;
         let surface_khr = self.create_surface_khr(handle)?;
 
         let surface_loader = khr::surface::Instance::new(
@@ -278,7 +280,7 @@ impl Instance {
             }
             .into_iter()
             .find(|format| {
-                format.format == vk::Format::B8G8R8A8_UNORM
+                format.format == PREFERRED_FORMAT
             })
 
             .ok_or(
@@ -486,6 +488,7 @@ impl Instance {
             swapchain_loader,
             surface_khr,
             swapchain_khr,
+            PREFERRED_FORMAT,
             device,
             present_queue,
             command_pool,
