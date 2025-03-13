@@ -1,3 +1,8 @@
+mod shader;
+
+pub(crate) use shader::FragmentShaderStore;
+pub(crate) use shader::VertexShaderStore;
+
 pub struct VkObjectStore<K, T>(Option<Vec<Entry<K, T>>>)
 where
     K: Copy + Clone + PartialEq + PartialOrd + Ord + Eq;
@@ -23,34 +28,6 @@ impl<K, T> VkObjectStore<K, T>
 where
     K: Copy + Clone + PartialEq + PartialOrd + Ord + Eq,
 {
-    #[inline]
-    pub(crate) fn fill<const N: usize, E, F>(
-        params: [E; N],
-        constructor: F,
-    ) -> logging::Result<Self>
-    where
-        F: Fn(E) -> logging::Result<(K, T)>,
-    {
-        if N == 0 {
-            return Ok(Self(None));
-        }
-
-        let mut storage = Vec::with_capacity(N);
-
-        for p in params {
-            match constructor(p) {
-                Ok((key, object)) => {
-                    storage.push(Entry { key, object })
-                }
-                Err(err) => return Err(err),
-            }
-        }
-
-        storage.sort_by(|a, b| a.key.cmp(&b.key));
-
-        Ok(Self(Some(storage)))
-    }
-
     #[inline]
     pub(crate) unsafe fn use_object<
         F: FnOnce() -> logging::Result<T>,

@@ -1,12 +1,11 @@
-use ash::{
-    khr,
-    vk::{self, ShaderModule},
-};
+use ash::{khr, vk};
 
 use crate::{
     allocation_callbacks::ALLOCATION_CALLBACKS,
     spirv::{fs::FragmentShaderId, vs::VertexShaderId},
-    vk_object_store::VkObjectStore,
+    vk_object_store::{
+        FragmentShaderStore, VertexShaderStore, VkObjectStore,
+    },
 };
 
 pub struct UiRenderer {
@@ -20,10 +19,8 @@ pub struct UiRenderer {
     setup_command_buffer: vk::CommandBuffer,
     draw_command_buffer: vk::CommandBuffer,
     present_image_views: Box<[vk::ImageView]>,
-    vertex_shaders:
-        VkObjectStore<VertexShaderId, vk::ShaderModule>,
-    fragment_shaders:
-        VkObjectStore<FragmentShaderId, vk::ShaderModule>,
+    vertex_shaders: VertexShaderStore,
+    fragment_shaders: FragmentShaderStore,
     render_pipelines:
         VkObjectStore<RenderPipelineId, vk::Pipeline>,
 }
@@ -52,15 +49,17 @@ impl UiRenderer {
     ) -> logging::Result<Self> {
         use crate::spirv::*;
 
-        let vertex_shaders = VkObjectStore::fill(
-            [vs::QUAD_EMIT_UV],
-            |source| create_shader_module(&device, &source),
-        )?;
+        let vertex_shaders =
+            VertexShaderStore::from_shader_sources(
+                &device,
+                [vs::QUAD_EMIT_UV],
+            )?;
 
-        let fragment_shaders = VkObjectStore::fill(
-            [fs::ROUNDED_RECTANGLE_COLOR_FILL],
-            |source| create_shader_module(&device, &source),
-        )?;
+        let fragment_shaders =
+            FragmentShaderStore::from_shader_sources(
+                &device,
+                [fs::ROUNDED_RECTANGLE_COLOR_FILL],
+            )?;
 
         Ok(Self {
             surface_loader,
@@ -142,36 +141,4 @@ impl Drop for UiRenderer {
             );
         }
     }
-}
-
-#[inline(always)]
-fn create_shader_module<T>(
-    device: &ash::Device,
-    source: &crate::spirv::ShaderSource<T>,
-) -> logging::Result<(T, ShaderModule)>
-where
-    T: std::hash::Hash
-        + Copy
-        + Clone
-        + PartialEq
-        + PartialOrd
-        + Eq
-        + Ord,
-{
-    let module = unsafe {
-        device
-            .create_shader_module(
-                &source.create_info(),
-                ALLOCATION_CALLBACKS,
-            )
-            .map_err(|err| {
-                logging::ErrorKind::VulkanError {
-                    function_name: "create_shader_module",
-                    vk_code: err.as_raw(),
-                }
-                .into_error()
-            })?
-    };
-
-    Ok((source.id, module))
 }
