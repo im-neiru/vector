@@ -1,5 +1,3 @@
-use std::pin::Pin;
-
 use ash::{khr, vk};
 use winit::raw_window_handle::{
     HasDisplayHandle, HasWindowHandle, RawDisplayHandle,
