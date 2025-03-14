@@ -10,4 +10,4 @@ ttf-parser = "0.25.1"
 ash = { version = "0.38.0", features = ["linked"], default-features = false }
 winit = { workspace = true }
 [build-dependencies]
-shaderc = "0.9"
+shader_compile = { path = "../shader_compile", package = "shader-compile" }

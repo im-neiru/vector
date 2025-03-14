@@ -1134,6 +1134,9 @@ dependencies = [
 [[package]]
 name = "shader-compile"
 version = "0.1.0"
+dependencies = [
+ "shaderc",
+]
 
 [[package]]
 name = "shaderc"
@@ -1358,7 +1361,7 @@ version = "0.1.0"
 dependencies = [
  "ash",
  "pollster",
- "shaderc",
+ "shader-compile",
  "ttf-parser",
  "vector-logging",
  "winit",
