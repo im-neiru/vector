@@ -51,6 +51,7 @@ pub(crate) enum StorageClass {
     PushConstant,
     Input,
     Output,
+    Workgroup,
 }
 
 #[repr(u32)]
