@@ -7,17 +7,7 @@ where
     T: Hash + PartialEq + PartialOrd + Eq + Ord,
 {
     pub(crate) id: T,
-    pub(super) bytes: &'a [u8],
-}
-
-#[macro_export(local_inner_macros)]
-macro_rules! include_spirv {
-    ($id:expr, $path:expr) => {
-        super::ShaderSource {
-            id: $id,
-            bytes: ::std::include_bytes!($path),
-        }
-    };
+    pub(super) words: &'a [u32],
 }
 
 impl<'a, T> ShaderSource<'a, T>
@@ -33,8 +23,8 @@ where
                 ash::vk::ShaderModuleCreateInfo::STRUCTURE_TYPE,
             p_next: std::ptr::null(),
             flags: ash::vk::ShaderModuleCreateFlags::empty(),
-            code_size: self.bytes.len(),
-            p_code: self.bytes.as_ptr() as *const u32,
+            code_size: self.words.len() << 2,
+            p_code: self.words.as_ptr(),
             _marker: std::marker::PhantomData,
         }
     }
