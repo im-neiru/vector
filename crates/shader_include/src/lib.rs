@@ -1,6 +1,7 @@
 mod data_type;
 mod generator;
 mod input;
+mod layout;
 
 use proc_macro::TokenStream;
 
