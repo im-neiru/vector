@@ -1139,6 +1139,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "shader-include"
+version = "0.1.0"
+
+[[package]]
 name = "shaderc"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1362,6 +1366,7 @@ dependencies = [
  "ash",
  "pollster",
  "shader-compile",
+ "shader-include",
  "ttf-parser",
  "vector-logging",
  "winit",
