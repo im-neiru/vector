@@ -1,4 +1,3 @@
-mod data_type;
 mod generator;
 mod input;
 mod layout;

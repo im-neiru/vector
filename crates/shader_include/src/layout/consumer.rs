@@ -4,99 +4,24 @@ use rspirv::{
     dr::{Instruction, ModuleHeader},
     spirv,
 };
-use std::collections::HashMap;
 
-use crate::data_type::Type;
-
-#[derive(Clone, Debug)]
-pub(crate) struct Layout {
-    pub entry_points: Box<[EntryPoint]>,
-    pub uniforms: Box<[UniformVariable]>,
-    pub push_constants: Box<[PushConstantVariable]>,
-}
-
-#[derive(Clone, Debug)]
-pub(crate) struct UniformVariable {
-    pub set: u32,
-    pub binding: u32,
-    pub name: Option<Box<str>>,
-    pub r#type: Type,
-}
-
-#[derive(Clone, Debug)]
-pub(crate) struct LocationVariable {
-    pub location: u32,
-    pub name: Option<Box<str>>,
-    pub r#type: Type,
-}
-
-#[derive(Clone, Debug)]
-pub(crate) struct EntryPoint {
-    pub name: Option<Box<str>>,
-    pub stage_params: StageParams,
-}
-
-#[derive(Clone, Debug)]
-pub(crate) enum StageParams {
-    Vertex {
-        inputs: Box<[LocationVariable]>,
-        outputs: Box<[LocationVariable]>,
-    },
-    Fragment {
-        inputs: Box<[LocationVariable]>,
-        outputs: Box<[LocationVariable]>,
-    },
-    Compute {
-        local_size: LocalSize,
-    },
-}
-
-#[derive(Clone, Debug)]
-pub(crate) struct LocalSize {
-    pub x: u32,
-    pub y: u32,
-    pub z: u32,
-}
-
-#[derive(Clone, Debug)]
-pub(crate) struct PushConstantVariable {
-    pub r#type: u32,
-    pub name: Option<Box<str>>,
-}
-
-#[derive(Default)]
-struct VariableDecoration {
-    binding: Option<u32>,
-    set: Option<u32>,
-    location: Option<u32>,
-    name: Option<String>,
-}
+use utils::U32BufferMap;
 
 pub struct ConsumerImpl {
-    entry_points: Vec<EntryPoint>,
-    uniforms: Vec<UniformVariable>,
-    push_constants: Vec<PushConstantVariable>,
-    variable_decorations: HashMap<u32, VariableDecoration>,
+    entry_points: Vec<super::EntryPoint>,
+    field_declarations: U32BufferMap<u32, 8>,
 }
 
 impl ConsumerImpl {
     pub fn new() -> Self {
         Self {
-            entry_points: Vec::new(),
-            uniforms: Vec::new(),
-            push_constants: Vec::new(),
-            variable_decorations: HashMap::new(),
+            field_declarations: U32BufferMap::new(),
+            entry_points: Vec::with_capacity(1),
         }
     }
 
-    pub fn finalize_layout(self) -> Layout {
-        Layout {
-            entry_points: self.entry_points.into_boxed_slice(),
-            uniforms: self.uniforms.into_boxed_slice(),
-            push_constants: self
-                .push_constants
-                .into_boxed_slice(),
-        }
+    pub fn finalize_layout(self) -> super::Layout {
+        todo!()
     }
 }
 
@@ -128,18 +53,18 @@ impl Consumer for ConsumerImpl {
                         &inst.operands[0]
                     {
                         let stage_params = match exec_model {
-                            spirv::ExecutionModel::Vertex => StageParams::Vertex {
+                            spirv::ExecutionModel::Vertex => super::StageParams::Vertex {
                                 inputs: Box::new([]),
                                 outputs: Box::new([]),
                             },
-                            spirv::ExecutionModel::Fragment => StageParams::Fragment {
+                            spirv::ExecutionModel::Fragment => super::StageParams::Fragment {
                                 inputs: Box::new([]),
                                 outputs: Box::new([]),
                             },
-                            spirv::ExecutionModel::GLCompute => StageParams::Compute {
-                                local_size: LocalSize { x: 1, y: 1, z: 1 },
+                            spirv::ExecutionModel::GLCompute => super::StageParams::Compute {
+                                local_size: super::LocalSize { x: 1, y: 1, z: 1 },
                             },
-                            _ => StageParams::Vertex {
+                            _ => super::StageParams::Vertex {
                                 inputs: Box::new([]),
                                 outputs: Box::new([]),
                             },
@@ -149,7 +74,7 @@ impl Consumer for ConsumerImpl {
                             &inst.operands[2]
                         {
                             self.entry_points.push(
-                                EntryPoint {
+                                super::EntryPoint {
                                     name: Some(
                                         name.clone()
                                             .into_boxed_str(),
@@ -200,6 +125,7 @@ impl Consumer for ConsumerImpl {
                     if let Operand::IdRef(target_id) =
                         inst.operands[0]
                     {
+                        // println!("{:?}", inst.operands);
                         if let Operand::LiteralString(name) =
                             &inst.operands[1]
                         {
@@ -247,6 +173,18 @@ impl Consumer for ConsumerImpl {
                         }
                     }
                 }
+            }
+            Op::TypePointer => {
+                println!(
+                    "{:?} = OpTypePointer {:?}",
+                    inst.result_id, inst.operands
+                );
+            }
+            Op::TypeStruct => {
+                println!(
+                    "{:?} = OpTypeStruct {:?}",
+                    inst.result_id, inst.operands
+                );
             }
             Op::ExecutionMode => {
                 if inst.operands.len() >= 2 {
@@ -299,7 +237,7 @@ fn parse_spirv(binary: &[u32]) -> Layout {
 fn test_parse() {
     let spirv_binary = {
         let bytes = include_bytes!(
-            "../../graphics/src/spirv/vs_quad_emit_uv.spv"
+            "../../../graphics/src/spirv/vs_quad_emit_uv.spv"
         );
 
         bytes
