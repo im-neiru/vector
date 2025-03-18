@@ -12,18 +12,18 @@ impl<T, const N: usize> U32BufferMap<T, N> {
 
     #[inline]
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         assert!(
             N.is_power_of_two(),
             "N must be a power of two for bitwise AND hashing to work correctly"
         );
         Self {
-            buckets: std::array::from_fn(|_| Vec::new()),
+            buckets: [const { Vec::new() }; N],
         }
     }
 
     #[inline]
-    fn bucket_index(key: u32) -> usize {
+    const fn bucket_index(key: u32) -> usize {
         (key as usize) & Self::DIVIDER
     }
 
@@ -47,19 +47,26 @@ impl<T, const N: usize> U32BufferMap<T, N> {
     #[inline]
     pub fn get(&self, key: u32) -> Option<&T> {
         let index = Self::bucket_index(key);
-        self.buckets[index]
-            .iter()
-            .find(|entry| entry.key == key)
-            .map(|entry| &entry.value)
+        for entry in self.buckets[index].iter() {
+            if entry.key == key {
+                return Some(&entry.value);
+            }
+        }
+
+        None
     }
 
     #[inline]
     pub fn get_mut(&mut self, key: u32) -> Option<&mut T> {
         let index = Self::bucket_index(key);
-        self.buckets[index]
-            .iter_mut()
-            .find(|entry| entry.key == key)
-            .map(|entry| &mut entry.value)
+
+        for entry in self.buckets[index].iter_mut() {
+            if entry.key == key {
+                return Some(&mut entry.value);
+            }
+        }
+
+        None
     }
 
     #[inline]
@@ -74,7 +81,15 @@ impl<T, const N: usize> U32BufferMap<T, N> {
 
     #[inline]
     pub fn contains_key(&self, key: u32) -> bool {
-        self.get(key).is_some()
+        let index = Self::bucket_index(key);
+
+        for entry in self.buckets[index].iter() {
+            if entry.key == key {
+                return true;
+            }
+        }
+
+        false
     }
 }
 
@@ -100,4 +115,51 @@ fn test_insert_get_remove() {
 
     assert_eq!(map.remove(42), Some(String::from("String1")));
     assert!(map.get(42).is_none());
+}
+
+#[test]
+fn test_speed_u32_buffer_map() {
+    use rand::Rng;
+
+    let mut rng = rand::rng();
+
+    for n in 1..=25 {
+        println!("#{}: ", n);
+
+        let sample_data: Vec<(u32, String)> = (0..(n * 5))
+            .map(|_| {
+                let key = rng.random::<u32>();
+                (key, format!("gibberish_{}", key))
+            })
+            .collect();
+
+        let start = std::time::Instant::now();
+        {
+            let mut u32_buffer_map =
+                U32BufferMap::<String, 8>::new();
+
+            for &(key, ref value) in &sample_data {
+                u32_buffer_map.insert(key, value.clone());
+            }
+
+            for &(key, _) in &sample_data {
+                let _ = u32_buffer_map.get(key);
+            }
+        }
+        let duration_custom = start.elapsed();
+        println!("U32BufferMap took: {:?}", duration_custom);
+
+        let start = std::time::Instant::now();
+        {
+            let mut std_map = std::collections::HashMap::new();
+            for &(key, ref value) in &sample_data {
+                std_map.insert(key, value.clone());
+            }
+            for &(key, _) in &sample_data {
+                let _ = std_map.get(&key);
+            }
+        }
+        let duration_std = start.elapsed();
+        println!("HashMap took: {:?}", duration_std);
+    }
 }
