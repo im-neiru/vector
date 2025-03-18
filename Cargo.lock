@@ -1219,6 +1219,7 @@ dependencies = [
  "quote",
  "rspirv",
  "syn",
+ "thiserror 2.0.12",
  "vector-utils",
 ]
 

@@ -1,5 +1,6 @@
 mod consumer;
 mod data_type;
+mod parse_error;
 
 pub use data_type::*;
 
