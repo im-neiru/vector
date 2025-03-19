@@ -10,8 +10,10 @@ use utils::U32BufferMap;
 pub struct ConsumerImpl {
     entry_points: Vec<super::EntryPoint>,
     type_declarations: U32BufferMap<TypeDeclaration, 8>,
+    name_declarations: U32BufferMap<Box<str>, 8>,
 }
 
+#[derive(Debug)]
 enum TypeDeclaration {
     Void,
     Bool,
@@ -31,12 +33,14 @@ impl ConsumerImpl {
     pub fn new() -> Self {
         Self {
             type_declarations: U32BufferMap::new(),
+            name_declarations: U32BufferMap::new(),
             entry_points: Vec::with_capacity(1),
         }
     }
 
     pub fn finalize_layout(self) {
-        todo!()
+        println!("{:?}", &self.type_declarations);
+        println!("{:?}", &self.name_declarations);
     }
 }
 
@@ -137,24 +141,18 @@ impl Consumer for ConsumerImpl {
             //         }
             //     }
             // }
-            // Op::Name => {
-            //     if inst.operands.len() >= 2 {
-            //         if let Operand::IdRef(target_id) =
-            //             inst.operands[0]
-            //         {
-            //             // println!("{:?}", inst.operands);
-            //             if let Operand::LiteralString(name) =
-            //                 &inst.operands[1]
-            //             {
-            //                 let dec_entry = self
-            //                     .variable_decorations
-            //                     .entry(target_id)
-            //                     .or_default();
-            //                 dec_entry.name = Some(name.clone());
-            //             }
-            //         }
-            //     }
-            // }
+            Op::Name => {
+                if let (
+                    Some(Operand::IdRef(id)),
+                    Some(Operand::LiteralString(name)),
+                ) = (
+                    inst.operands.first(),
+                    inst.operands.get(1),
+                ) {
+                    self.name_declarations
+                        .insert(*id, name.as_str().into());
+                }
+            }
             // Op::Variable => {
             //     if inst.operands.len() >= 3 {
             //         if let (
@@ -192,12 +190,12 @@ impl Consumer for ConsumerImpl {
             //     }
             // }
             Op::TypePointer => {
-                println!(
-                    "{:?} = {:?} {:?}",
-                    inst.result_id,
-                    inst.class.opname,
-                    inst.operands
-                );
+                // println!(
+                //     "{:?} = {:?} {:?}",
+                //     inst.result_id,
+                //     inst.class.opname,
+                //     inst.operands
+                // );
             }
             Op::TypeFloat => {
                 if let Some(result_id) = inst.result_id {
