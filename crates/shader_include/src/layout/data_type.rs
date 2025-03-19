@@ -17,10 +17,10 @@ pub(crate) enum Type {
     },
     Sampler,
     SampledImage {
-        image_type: Box<Type>,
+        image_type_index: u32,
     },
     Array {
-        element_type: Box<Type>,
+        element_type_index: u32,
         length: Option<u32>,
     },
     Struct {
@@ -29,7 +29,7 @@ pub(crate) enum Type {
     },
     Pointer {
         storage_class: StorageClass,
-        pointed_type: Box<Type>,
+        pointed_type_index: u32,
     },
 }
 
