@@ -21,6 +21,7 @@ enum TypeDeclaration {
     Vec2 { scalar_type: u32 },
     Vec3 { scalar_type: u32 },
     Vec4 { scalar_type: u32 },
+    Mat2 { column_type: u32 },
     Mat3 { column_type: u32 },
     Mat4 { column_type: u32 },
     Struct { members_type: Vec<u32> },
@@ -310,35 +311,35 @@ impl Consumer for ConsumerImpl {
                         inst.operands.get(1),
                     ) {
                         (
-                            Some(&Operand::IdRef(scalar_type)),
+                            Some(&Operand::IdRef(column_type)),
                             Some(&Operand::LiteralBit32(2)),
                         ) => {
                             self.type_declarations.insert(
                                 result_id,
-                                TypeDeclaration::Vec2 {
-                                    scalar_type,
+                                TypeDeclaration::Mat2 {
+                                    column_type,
                                 },
                             );
                         }
                         (
-                            Some(&Operand::IdRef(scalar_type)),
+                            Some(&Operand::IdRef(column_type)),
                             Some(&Operand::LiteralBit32(3)),
                         ) => {
                             self.type_declarations.insert(
                                 result_id,
-                                TypeDeclaration::Vec3 {
-                                    scalar_type,
+                                TypeDeclaration::Mat3 {
+                                    column_type,
                                 },
                             );
                         }
                         (
-                            Some(&Operand::IdRef(scalar_type)),
+                            Some(&Operand::IdRef(column_type)),
                             Some(&Operand::LiteralBit32(4)),
                         ) => {
                             self.type_declarations.insert(
                                 result_id,
-                                TypeDeclaration::Vec4 {
-                                    scalar_type,
+                                TypeDeclaration::Mat4 {
+                                    column_type,
                                 },
                             );
                         }
