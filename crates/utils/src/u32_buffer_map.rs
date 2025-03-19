@@ -93,6 +93,25 @@ impl<T, const N: usize> U32BufferMap<T, N> {
     }
 }
 
+impl<T, const N: usize> core::fmt::Debug for U32BufferMap<T, N>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        let mut map = f.debug_map();
+        for bucket in self.buckets.iter() {
+            for entry in bucket {
+                map.entry(&entry.key, &entry.value);
+            }
+        }
+
+        map.finish()
+    }
+}
+
 #[test]
 fn test_insert_get_remove() {
     let mut map = U32BufferMap::<String, 8>::new();
