@@ -8,13 +8,18 @@ pub struct Slang {
 
 impl Slang {
     pub unsafe fn new() -> Self {
+        let descriptor = sys::SlangGlobalSessionDesc::default();
         let mut global_session = None;
 
         unsafe {
-            sys::slang_create_global_session2(
-                0,
+            let result = sys::slang_create_global_session2(
+                &descriptor,
                 &mut global_session,
             );
+
+            if result.failed() {
+                panic!("slang_createGlobalSession2 failed");
+            }
         };
 
         let global_session = global_session.unwrap();
