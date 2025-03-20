@@ -6,7 +6,7 @@ use std::sync::{
 use super::{
     bindings, compile_request::CompileRequest,
     global_session::IGlobalSessionRef,
-    slang_global_session_desc::SlangGlobalSessionDesc,
+    global_session_desc::SlangGlobalSessionDesc,
 };
 
 static GLOBAL_SESSION: GlobalSessionArc = GlobalSessionArc {
