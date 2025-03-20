@@ -1,3 +1,4 @@
+#include "common/vertex_with_uv.slang"
 
 [[vk::binding(0, 0)]]
 cbuffer ProjectionBlock
@@ -19,16 +20,10 @@ struct VsInput
     [[vk::location(0)]] float2 in_position : POSITION;
 };
 
-struct VsOutput
-{
-    [[vk::location(0)]] float4 position : SV_POSITION;
-    [[vk::location(1)]] float2 uv : TEXCOORD0;
-};
-
 [shader("vertex")]
-VsOutput vs_main(VsInput input)
+VertexWithUv vs_main(VsInput input)
 {
-    VsOutput output;
+    VertexWithUv output;
 
     float3 local_position = mul(float3(input.in_position, z), transform);
 

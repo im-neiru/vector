@@ -1,3 +1,5 @@
+#include "common/vertex_with_uv.slang"
+
 struct RoundedRectangleColorFill
 {
     float4 color;
@@ -7,12 +9,6 @@ struct RoundedRectangleColorFill
     float radius_bl;
     float radius_br;
     float2 padding;
-};
-
-struct VsOutput
-{
-    [[vk::location(0)]] float4 position : SV_POSITION;
-    [[vk::location(1)]] float2 uv : TEXCOORD0;
 };
 
 [vk::binding(0, 1)]
@@ -59,7 +55,7 @@ float median(float3 s)
 }
 
 [shader("fragment")]
-float4 main(VsOutput input) : SV_Target0
+float4 main(VertexWithUv input) : SV_Target0
 {
     float anti_alias_factor = 0.6;
     float3 msdf_values = pseudo_msdf(input.uv);
