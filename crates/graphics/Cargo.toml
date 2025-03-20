@@ -9,7 +9,5 @@ logging = { package = "vector-logging", path = "../logging" }
 ttf-parser = "0.25.1"
 ash = { version = "0.38.0", features = ["linked"], default-features = false }
 winit = { workspace = true }
-shader_include = { path = "../shader_include", package = "shader-include" }
 
 [build-dependencies]
-shader_compile = { path = "../shader_compile", package = "shader-compile" }
