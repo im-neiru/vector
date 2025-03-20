@@ -11,3 +11,4 @@ ash = { version = "0.38.0", features = ["linked"], default-features = false }
 winit = { workspace = true }
 
 [build-dependencies]
+slang_build = { path = "../slang-build", package = "slang-build" }
