@@ -6,6 +6,7 @@ pub(crate) struct IGlobalSession {
 }
 
 #[repr(transparent)]
+#[derive(Clone, Copy)]
 pub(crate) struct IGlobalSessionRef(NonNull<IGlobalSession>);
 
 unsafe impl Send for IGlobalSessionRef {}

@@ -3,7 +3,7 @@ use core::fmt;
 #[must_use]
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct SlangResult(u32);
+pub(super) struct SlangResult(u32);
 
 impl SlangResult {
     #[inline(always)]
