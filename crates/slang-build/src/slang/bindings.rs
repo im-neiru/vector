@@ -1,8 +1,8 @@
 use super::{
     compile_request::ICompileRequestRef,
     global_session::IGlobalSessionRef,
-    slang_global_session_desc::SlangGlobalSessionDesc,
-    slang_result::SlangResult,
+    global_session_desc::SlangGlobalSessionDesc,
+    result::SlangResult, source_language::SlangSourceLanguage,
 };
 
 #[link(name = "slang")]
@@ -23,17 +23,31 @@ unsafe extern "C" {
 
     #[link_name = "spDestroyCompileRequest"]
     pub(crate) fn sp_destroy_compile_request(
-        session: ICompileRequestRef,
+        compile_request: ICompileRequestRef,
     );
 
     #[link_name = "spAddSearchPath"]
     pub(crate) fn sp_add_search_path(
-        session: ICompileRequestRef,
+        compile_request: ICompileRequestRef,
+        path: *const std::ffi::c_char,
+    );
+
+    #[link_name = "spAddTranslationUnit"]
+    pub(crate) fn sp_add_translation_unit(
+        compile_request: ICompileRequestRef,
+        language: SlangSourceLanguage,
+        module_name: *const std::ffi::c_char,
+    ) -> u32;
+
+    #[link_name = "spAddTranslationUnitSourceFile"]
+    pub(crate) fn sp_add_translation_unit_source_file(
+        compile_request: ICompileRequestRef,
+        translation_unit_index: SlangSourceLanguage,
         path: *const std::ffi::c_char,
     );
 
     #[link_name = "spCompile"]
     pub(crate) fn sp_compile(
-        session: ICompileRequestRef,
+        compile_request: ICompileRequestRef,
     ) -> SlangResult;
 }

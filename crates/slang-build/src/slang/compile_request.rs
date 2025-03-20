@@ -1,6 +1,13 @@
-use std::{ffi::CString, path::Path, ptr::NonNull};
+use std::{
+    ffi::{CStr, CString},
+    path::Path,
+    ptr::NonNull,
+};
 
-use super::{bindings::*, global_session::IGlobalSessionRef};
+use super::{
+    bindings::*, global_session::IGlobalSessionRef, instance,
+    source_language::SlangSourceLanguage,
+};
 
 #[repr(C)]
 pub(crate) struct ICompileRequest {
@@ -36,6 +43,20 @@ impl CompileRequest {
                 panic!("Failed compile")
             }
         };
+    }
+
+    #[inline]
+    pub(crate) fn add_translation_unit(
+        &self,
+        module_name: &CStr,
+    ) -> u32 {
+        unsafe {
+            sp_add_translation_unit(
+                self.0,
+                SlangSourceLanguage::Slang,
+                module_name.as_ptr(),
+            )
+        }
     }
 }
 
