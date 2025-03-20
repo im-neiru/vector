@@ -5,7 +5,6 @@ mod color;
 mod instance;
 mod mat3;
 mod size;
-mod spirv;
 mod ui_renderer;
 mod uv;
 mod vec2;

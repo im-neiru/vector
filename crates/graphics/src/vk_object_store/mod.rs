@@ -1,8 +1,8 @@
-mod render_pipelines;
-mod shader;
+// mod render_pipelines;
+// mod shader;
 
-pub(crate) use shader::FragmentShaderStore;
-pub(crate) use shader::VertexShaderStore;
+// pub(crate) use shader::FragmentShaderStore;
+// pub(crate) use shader::VertexShaderStore;
 
 pub struct VkObjectStore<K, T>(Option<Vec<Entry<K, T>>>)
 where
