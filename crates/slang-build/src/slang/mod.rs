@@ -1,12 +1,24 @@
+use std::ptr::NonNull;
+
 mod sys;
 
-use std::path::Path;
-
-pub struct Slang {}
+pub struct Slang {
+    global_session: NonNull<sys::IGlobalSession>,
+}
 
 impl Slang {
     pub unsafe fn new() -> Self {
-        unsafe { sys::slang_create_global_session(2) };
-        Self {}
+        let mut global_session = None;
+
+        unsafe {
+            sys::slang_create_global_session2(
+                0,
+                &mut global_session,
+            );
+        };
+
+        let global_session = global_session.unwrap();
+
+        Self { global_session }
     }
 }
