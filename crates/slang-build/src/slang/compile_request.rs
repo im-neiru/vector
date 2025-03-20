@@ -4,7 +4,8 @@ use std::{
 };
 
 use super::{
-    bindings::*, global_session::IGlobalSessionRef,
+    bindings::*, compile_target::SlangCompileTarget,
+    global_session::IGlobalSessionRef,
     source_language::SlangSourceLanguage,
 };
 
@@ -25,23 +26,23 @@ pub(crate) struct CompileRequest(pub(super) ICompileRequestRef);
 impl CompileRequest {
     #[inline]
     pub(crate) fn create(session: IGlobalSessionRef) -> Self {
-        Self(unsafe {
+        let reference = unsafe {
             sp_create_compile_request(session).unwrap()
-        })
+        };
+
+        unsafe {
+            sp_set_code_gen_target(
+                reference,
+                SlangCompileTarget::Spirv,
+            );
+        }
+
+        Self(reference)
     }
 
     #[inline]
     pub(crate) fn add_search_path(&self, path: &CString) {
         unsafe { sp_add_search_path(self.0, path.as_ptr()) };
-    }
-
-    #[inline]
-    pub(crate) fn compile(&self) {
-        unsafe {
-            if sp_compile(self.0).failed() {
-                panic!("Failed compile")
-            }
-        };
     }
 
     #[inline]
@@ -71,6 +72,15 @@ impl CompileRequest {
                 path.as_ptr(),
             )
         }
+    }
+
+    #[inline]
+    pub(crate) fn compile(&self) {
+        unsafe {
+            if sp_compile(self.0).failed() {
+                panic!("Failed compile")
+            }
+        };
     }
 }
 

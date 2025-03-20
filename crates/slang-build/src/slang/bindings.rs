@@ -1,5 +1,6 @@
 use super::{
     compile_request::ICompileRequestRef,
+    compile_target::SlangCompileTarget,
     global_session::IGlobalSessionRef,
     global_session_desc::SlangGlobalSessionDesc,
     result::SlangResult, source_language::SlangSourceLanguage,
@@ -25,6 +26,12 @@ unsafe extern "C" {
     pub(crate) fn sp_destroy_compile_request(
         compile_request: ICompileRequestRef,
     );
+
+    #[link_name = "spSetCodeGenTarget"]
+    pub(crate) fn sp_set_code_gen_target(
+        compile_request: ICompileRequestRef,
+        target: SlangCompileTarget,
+    ) -> i32;
 
     #[link_name = "spAddSearchPath"]
     pub(crate) fn sp_add_search_path(

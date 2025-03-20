@@ -1,8 +1,4 @@
-use std::{
-    ffi::CString,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+use std::{ffi::CString, path::Path, str::FromStr};
 
 use crate::{config, slang::Slang};
 
