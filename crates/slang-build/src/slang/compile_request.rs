@@ -1,11 +1,10 @@
 use std::{
     ffi::{CStr, CString},
-    path::Path,
     ptr::NonNull,
 };
 
 use super::{
-    bindings::*, global_session::IGlobalSessionRef, instance,
+    bindings::*, global_session::IGlobalSessionRef,
     source_language::SlangSourceLanguage,
 };
 
@@ -58,6 +57,21 @@ impl CompileRequest {
             )
         }
     }
+
+    #[inline]
+    pub(crate) fn add_translation_unit_source_file(
+        &self,
+        translation_unit_index: u32,
+        path: &CStr,
+    ) {
+        unsafe {
+            sp_add_translation_unit_source_file(
+                self.0,
+                translation_unit_index,
+                path.as_ptr(),
+            )
+        }
+    }
 }
 
 impl Drop for CompileRequest {
@@ -65,5 +79,14 @@ impl Drop for CompileRequest {
         unsafe {
             sp_destroy_compile_request(self.0);
         }
+    }
+}
+
+impl core::fmt::Debug for CompileRequest {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        core::fmt::Debug::fmt(&self.0.0, f)
     }
 }

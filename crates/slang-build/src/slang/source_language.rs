@@ -1,5 +1,6 @@
 #[repr(i32)]
 #[derive(Clone, Copy)]
+#[allow(unused)]
 pub enum SlangSourceLanguage {
     Unknown = 0,
     Slang = 1,

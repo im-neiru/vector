@@ -42,7 +42,7 @@ unsafe extern "C" {
     #[link_name = "spAddTranslationUnitSourceFile"]
     pub(crate) fn sp_add_translation_unit_source_file(
         compile_request: ICompileRequestRef,
-        translation_unit_index: SlangSourceLanguage,
+        translation_unit_index: u32,
         path: *const std::ffi::c_char,
     );
 
