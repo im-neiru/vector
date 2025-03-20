@@ -1,6 +1,6 @@
 use std::{ffi::CString, path::Path, ptr::NonNull};
 
-use super::bindings::*;
+use super::{bindings::*, global_session::IGlobalSessionRef};
 
 #[repr(C)]
 pub(crate) struct ICompileRequest {
@@ -18,11 +18,14 @@ pub(crate) struct CompileRequest(pub(super) ICompileRequestRef);
 
 impl CompileRequest {
     #[inline]
-    pub(crate) fn add_search_path(&self, path: &Path) {
-        let path =
-            CString::new(path.to_str().unwrap().as_bytes())
-                .unwrap();
+    pub(crate) fn create(session: IGlobalSessionRef) -> Self {
+        Self(unsafe {
+            sp_create_compile_request(session).unwrap()
+        })
+    }
 
+    #[inline]
+    pub(crate) fn add_search_path(&self, path: &CString) {
         unsafe { sp_add_search_path(self.0, path.as_ptr()) };
     }
 

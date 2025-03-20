@@ -4,7 +4,8 @@ use std::sync::{
 };
 
 use super::{
-    bindings, global_session::IGlobalSessionRef,
+    bindings, compile_request::CompileRequest,
+    global_session::IGlobalSessionRef,
     slang_global_session_desc::SlangGlobalSessionDesc,
 };
 
@@ -18,7 +19,7 @@ struct GlobalSessionArc {
     counter: AtomicU32,
 }
 
-pub struct Slang {}
+pub struct Slang;
 
 impl Slang {
     pub(crate) fn new() -> Self {
@@ -32,7 +33,7 @@ impl Slang {
                 GLOBAL_SESSION
                     .counter
                     .fetch_add(1, Ordering::Relaxed);
-                return Self::inner_new();
+                return Self;
             }
         }
 
@@ -55,12 +56,15 @@ impl Slang {
                 .fetch_add(1, Ordering::Relaxed);
         }
 
-        Self::inner_new()
+        Self
     }
 
-    #[inline]
-    fn inner_new() -> Self {
-        Self {}
+    pub(crate) fn create_compile_request(
+        &self,
+    ) -> CompileRequest {
+        let session = GLOBAL_SESSION.session.read().unwrap();
+        let session = session.unwrap();
+        CompileRequest::create(session)
     }
 }
 
