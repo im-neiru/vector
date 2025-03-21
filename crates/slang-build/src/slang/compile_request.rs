@@ -128,7 +128,7 @@ impl CompileRequest {
 
                 if sp_get_entry_point_code_blob(
                     self.reference,
-                    0,
+                    entry_point_index,
                     self.target_index,
                     &mut blob,
                 )
