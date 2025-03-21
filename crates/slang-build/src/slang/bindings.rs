@@ -78,4 +78,9 @@ unsafe extern "C" {
     pub(crate) fn sp_get_reflection(
         compile_request: ICompileRequestRef,
     ) -> Option<SlangReflectionRef>;
+
+    #[link_name = "spReflection_getEntryPointCount"]
+    pub(crate) fn sp_reflection_get_entry_point_count(
+        reflection: SlangReflectionRef,
+    ) -> u32;
 }

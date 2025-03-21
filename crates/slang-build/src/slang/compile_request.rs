@@ -101,24 +101,31 @@ impl CompileRequest {
             let reflection =
                 sp_get_reflection(self.reference).unwrap();
 
-            let mut blob = None;
+            let entry_point_count =
+                sp_reflection_get_entry_point_count(reflection);
 
-            if sp_get_entry_point_code_blob(
-                self.reference,
-                0,
-                self.target_index,
-                &mut blob,
-            )
-            .failed()
-            {
-                println!("Failed sp_get_entry_point_code_blob");
+            for entry_point_index in 0..entry_point_count {
+                let mut blob = None;
+
+                if sp_get_entry_point_code_blob(
+                    self.reference,
+                    0,
+                    self.target_index,
+                    &mut blob,
+                )
+                .failed()
+                {
+                    println!(
+                        "Failed sp_get_entry_point_code_blob"
+                    );
+                }
+
+                let mut blob = blob.unwrap();
+
+                let bytes = blob.as_ref().as_slice();
+
+                blob.as_mut().release();
             }
-
-            let mut blob = blob.unwrap();
-
-            let bytes = blob.as_ref().as_slice();
-
-            blob.as_mut().release();
         };
     }
 }
