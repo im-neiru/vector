@@ -9,5 +9,5 @@ pub(crate) struct SlangReflection {
 #[derive(Clone, Copy)]
 pub(crate) struct SlangReflectionRef(NonNull<SlangReflection>);
 
-unsafe impl Send for SlangReflection {}
-unsafe impl Sync for SlangReflection {}
+unsafe impl Send for SlangReflectionRef {}
+unsafe impl Sync for SlangReflectionRef {}

@@ -83,7 +83,7 @@ impl CompileRequest {
     }
 
     #[inline]
-    pub(crate) fn compile(&self) {
+    pub(crate) fn compile(&self, output_dir: &std::path::Path) {
         unsafe {
             if sp_compile(self.reference).failed() {
                 panic!("Failed compile")
@@ -105,6 +105,25 @@ impl CompileRequest {
                 sp_reflection_get_entry_point_count(reflection);
 
             for entry_point_index in 0..entry_point_count {
+                let entry_point =
+                    sp_reflection_get_entry_point_by_index(
+                        reflection,
+                    )
+                    .unwrap();
+
+                let entry_point_name =
+                    sp_reflection_entry_point_get_name(
+                        entry_point,
+                    )
+                    .map(|v| CStr::from_ptr(v.as_ptr()))
+                    .unwrap()
+                    .to_str()
+                    .unwrap();
+
+                if entry_point_name.is_empty() {
+                    panic!("Empty entry point name");
+                }
+
                 let mut blob = None;
 
                 if sp_get_entry_point_code_blob(
@@ -122,7 +141,11 @@ impl CompileRequest {
 
                 let mut blob = blob.unwrap();
 
-                let bytes = blob.as_ref().as_slice();
+                std::fs::write(
+                    output_dir.join(entry_point_name),
+                    blob.as_ref().as_slice(),
+                )
+                .unwrap();
 
                 blob.as_mut().release();
             }

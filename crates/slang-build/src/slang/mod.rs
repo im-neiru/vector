@@ -6,6 +6,7 @@ mod global_session;
 mod global_session_desc;
 mod instance;
 mod reflect;
+mod reflection_entry_point;
 mod result;
 mod source_language;
 

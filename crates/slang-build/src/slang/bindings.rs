@@ -5,8 +5,9 @@ use super::{
     compile_target::SlangCompileTarget,
     global_session::IGlobalSessionRef,
     global_session_desc::SlangGlobalSessionDesc,
-    reflect::SlangReflectionRef, result::SlangResult,
-    source_language::SlangSourceLanguage,
+    reflect::SlangReflectionRef,
+    reflection_entry_point::SlangReflectionEntryPointRef,
+    result::SlangResult, source_language::SlangSourceLanguage,
 };
 
 #[link(name = "slang")]
@@ -83,4 +84,14 @@ unsafe extern "C" {
     pub(crate) fn sp_reflection_get_entry_point_count(
         reflection: SlangReflectionRef,
     ) -> u32;
+
+    #[link_name = "spReflection_getEntryPointByIndex"]
+    pub(crate) fn sp_reflection_get_entry_point_by_index(
+        reflection: SlangReflectionRef,
+    ) -> Option<SlangReflectionEntryPointRef>;
+
+    #[link_name = "spReflectionEntryPoint_getName"]
+    pub(crate) fn sp_reflection_entry_point_get_name(
+        reflection_entry_point: SlangReflectionEntryPointRef,
+    ) -> Option<NonNull<std::ffi::c_char>>;
 }

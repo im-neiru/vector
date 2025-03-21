@@ -5,13 +5,13 @@ use crate::{config, slang::Slang};
 pub struct Builder {
     slang: Slang,
     search_path: CString,
+    output_dir: Box<Path>,
     entries: Box<[BuildEntry]>,
 }
 
 #[derive(Debug)]
 struct BuildEntry {
     input: CString,
-    output: Box<Path>,
     module_name: CString,
 }
 
@@ -86,7 +86,6 @@ impl Builder {
                             input.to_str()?,
                         )
                         .ok()?,
-                        output: output.into_boxed_path(),
                         module_name: CString::from_str(
                             &file_name.to_str()?.to_uppercase(),
                         )
@@ -106,6 +105,13 @@ impl Builder {
             slang: Slang::new(),
             search_path,
             entries,
+            output_dir: if config.output_dir.is_absolute() {
+                config.output_dir.into()
+            } else {
+                manifest
+                    .join(config.output_dir)
+                    .into_boxed_path()
+            },
         }
     }
 
@@ -125,6 +131,6 @@ impl Builder {
             );
         }
 
-        compile_request.compile();
+        compile_request.compile(self.output_dir.as_ref());
     }
 }
