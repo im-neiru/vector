@@ -29,8 +29,8 @@ unsafe extern "C" {
         compile_request: ICompileRequestRef,
     );
 
-    #[link_name = "spSetCodeGenTarget"]
-    pub(crate) fn sp_set_code_gen_target(
+    #[link_name = "spAddCodeGenTarget"]
+    pub(crate) fn sp_add_code_gen_target(
         compile_request: ICompileRequestRef,
         target: SlangCompileTarget,
     ) -> i32;

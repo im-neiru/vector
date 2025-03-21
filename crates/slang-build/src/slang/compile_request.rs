@@ -35,7 +35,7 @@ impl CompileRequest {
         };
 
         let target_index = unsafe {
-            sp_set_code_gen_target(
+            sp_add_code_gen_target(
                 reference,
                 SlangCompileTarget::Spirv,
             )
@@ -101,14 +101,19 @@ impl CompileRequest {
                 }
             }
 
-            if sp_get_target_code_blob(
+            println!("{}", self.target_index);
+
+            let error = sp_get_target_code_blob(
                 self.reference,
                 self.target_index,
                 &mut blob,
-            )
-            .failed()
-            {
-                panic!("Failed sp_get_target_code_blob")
+            );
+
+            if error.failed() {
+                panic!(
+                    "Failed sp_get_target_code_blob: {error} {}",
+                    self.target_index
+                )
             }
 
             let blob = blob.unwrap();
