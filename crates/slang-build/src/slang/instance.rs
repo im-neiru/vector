@@ -7,6 +7,7 @@ use super::{
     bindings, compile_request::CompileRequest,
     global_session::IGlobalSessionRef,
     global_session_desc::SlangGlobalSessionDesc,
+    optimization_level::SlangOptimizationLevel,
 };
 
 static GLOBAL_SESSION: GlobalSessionArc = GlobalSessionArc {
@@ -61,10 +62,24 @@ impl Slang {
 
     pub(crate) fn create_compile_request(
         &self,
+        optimization: crate::OptimizationLevel,
     ) -> CompileRequest {
         let session = GLOBAL_SESSION.session.read().unwrap();
         let session = session.unwrap();
-        CompileRequest::create(session)
+        CompileRequest::create(
+            session,
+            match optimization {
+                crate::OptimizationLevel::Default => {
+                    SlangOptimizationLevel::Default
+                }
+                crate::OptimizationLevel::High => {
+                    SlangOptimizationLevel::High
+                }
+                crate::OptimizationLevel::Maximal => {
+                    SlangOptimizationLevel::Maximal
+                }
+            },
+        )
     }
 }
 

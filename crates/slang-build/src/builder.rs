@@ -7,6 +7,7 @@ pub struct Builder {
     search_path: CString,
     output_dir: Box<Path>,
     entries: Box<[BuildEntry]>,
+    optimization: crate::OptimizationLevel,
 }
 
 #[derive(Debug)]
@@ -112,12 +113,14 @@ impl Builder {
                     .join(config.output_dir)
                     .into_boxed_path()
             },
+            optimization: config.optimization,
         }
     }
 
     pub fn compile(self) {
-        let compile_request =
-            self.slang.create_compile_request();
+        let compile_request = self
+            .slang
+            .create_compile_request(self.optimization);
 
         compile_request.add_search_path(&self.search_path);
 

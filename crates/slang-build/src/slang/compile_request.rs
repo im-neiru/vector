@@ -6,6 +6,7 @@ use std::{
 use super::{
     bindings::*, compile_target::SlangCompileTarget,
     global_session::IGlobalSessionRef,
+    optimization_level::SlangOptimizationLevel,
     source_language::SlangSourceLanguage,
 };
 
@@ -28,7 +29,10 @@ pub(crate) struct CompileRequest {
 
 impl CompileRequest {
     #[inline]
-    pub(crate) fn create(session: IGlobalSessionRef) -> Self {
+    pub(crate) fn create(
+        session: IGlobalSessionRef,
+        optimization: SlangOptimizationLevel,
+    ) -> Self {
         let reference = unsafe {
             sp_create_compile_request(session).unwrap()
         };
@@ -38,6 +42,10 @@ impl CompileRequest {
                 reference,
                 SlangCompileTarget::Spirv,
             )
+        };
+
+        unsafe {
+            sp_set_optimization_level(reference, optimization)
         };
 
         Self {

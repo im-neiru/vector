@@ -5,6 +5,7 @@ use super::{
     compile_target::SlangCompileTarget,
     global_session::IGlobalSessionRef,
     global_session_desc::SlangGlobalSessionDesc,
+    optimization_level::SlangOptimizationLevel,
     reflect::SlangReflectionRef,
     reflection_entry_point::SlangReflectionEntryPointRef,
     result::SlangResult, source_language::SlangSourceLanguage,
@@ -29,6 +30,12 @@ unsafe extern "C" {
     #[link_name = "spDestroyCompileRequest"]
     pub(crate) fn sp_destroy_compile_request(
         compile_request: ICompileRequestRef,
+    );
+
+    #[link_name = "spSetOptimizationLevel"]
+    pub(crate) fn sp_set_optimization_level(
+        compile_request: ICompileRequestRef,
+        level: SlangOptimizationLevel,
     );
 
     #[link_name = "spAddCodeGenTarget"]
