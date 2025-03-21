@@ -4,8 +4,7 @@ use std::{
 };
 
 use super::{
-    bindings::*, blob::ISlangBlob,
-    compile_target::SlangCompileTarget,
+    bindings::*, compile_target::SlangCompileTarget,
     global_session::IGlobalSessionRef,
     source_language::SlangSourceLanguage,
 };
@@ -103,18 +102,11 @@ impl CompileRequest {
                 println!("Failed sp_get_entry_point_code_blob");
             }
 
-            let blob = blob.unwrap();
+            let mut blob = blob.unwrap();
 
             let bytes = blob.as_ref().as_slice();
 
-            if let Some(diagnostic) =
-                sp_get_diagnostic_output(self.reference)
-                    .map(|v| CStr::from_ptr(v.as_ptr()))
-            {
-                if !diagnostic.is_empty() {
-                    println!("{diagnostic:?}");
-                }
-            }
+            blob.as_mut().release();
         };
     }
 }

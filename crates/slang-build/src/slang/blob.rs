@@ -60,4 +60,10 @@ impl ISlangBlob {
         let size = unsafe { self.get_buffer_size() };
         unsafe { std::slice::from_raw_parts(ptr, size) }
     }
+
+    pub(crate) unsafe fn release(&mut self) {
+        unsafe {
+            (self.lp_vtable.as_ref().unwrap().release)(self)
+        };
+    }
 }
