@@ -51,35 +51,35 @@ impl Builder {
                         .file_name()?
                         .to_owned();
 
-                    let output =
-                        if config.output_dir.is_absolute() {
-                            config.output_dir.join(&file_name)
-                        } else {
-                            manifest
-                                .join(config.output_dir)
-                                .join(&file_name)
-                        }
-                        .with_extension("spv");
+                    // let output =
+                    //     if config.output_dir.is_absolute() {
+                    //         config.output_dir.join(&file_name)
+                    //     } else {
+                    //         manifest
+                    //             .join(config.output_dir)
+                    //             .join(&file_name)
+                    //     }
+                    //     .with_extension("spv");
 
-                    if output.exists() {
-                        let input_modified_date = entry
-                            .metadata()
-                            .ok()?
-                            .modified()
-                            .ok()?;
+                    // if output.exists() {
+                    //     let input_modified_date = entry
+                    //         .metadata()
+                    //         .ok()?
+                    //         .modified()
+                    //         .ok()?;
 
-                        let output_modified_date = output
-                            .metadata()
-                            .ok()?
-                            .modified()
-                            .ok()?;
+                    //     let output_modified_date = output
+                    //         .metadata()
+                    //         .ok()?
+                    //         .modified()
+                    //         .ok()?;
 
-                        if output_modified_date
-                            > input_modified_date
-                        {
-                            return None;
-                        }
-                    }
+                    //     if output_modified_date
+                    //         > input_modified_date
+                    //     {
+                    //         return None;
+                    //     }
+                    // }
 
                     Some(BuildEntry {
                         input: CString::from_str(
