@@ -1,3 +1,5 @@
+use std::ptr::NonNull;
+
 use super::{
     blob::ISlangBlob, compile_request::ICompileRequestRef,
     compile_target::SlangCompileTarget,
@@ -59,6 +61,11 @@ unsafe extern "C" {
         target_index: i32,
         blob: &mut Option<std::ptr::NonNull<ISlangBlob>>,
     ) -> SlangResult;
+
+    #[link_name = "spGetDiagnosticOutput"]
+    pub(crate) fn sp_get_diagnostic_output(
+        compile_request: ICompileRequestRef,
+    ) -> Option<NonNull<std::ffi::c_char>>;
 
     #[link_name = "spCompile"]
     pub(crate) fn sp_compile(

@@ -92,6 +92,15 @@ impl CompileRequest {
 
             let mut blob = None;
 
+            if let Some(diagnostic) =
+                sp_get_diagnostic_output(self.reference)
+                    .map(|v| CStr::from_ptr(v.as_ptr()))
+            {
+                if !diagnostic.is_empty() {
+                    println!("{diagnostic:?}");
+                }
+            }
+
             if sp_get_target_code_blob(
                 self.reference,
                 self.target_index,
