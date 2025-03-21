@@ -21,7 +21,7 @@ struct VsInput
 };
 
 [shader("vertex")]
-VertexWithUv vs_main(VsInput input)
+VertexWithUv quad_emit_uv(VsInput input)
 {
     VertexWithUv output;
 

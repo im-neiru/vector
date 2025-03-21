@@ -55,7 +55,7 @@ float median(float3 s)
 }
 
 [shader("fragment")]
-float4 main(VertexWithUv input) : SV_Target0
+float4 rounded_rectangle_color_fill(VertexWithUv input) : SV_Target0
 {
     float anti_alias_factor = 0.6;
     float3 msdf_values = pseudo_msdf(input.uv);
