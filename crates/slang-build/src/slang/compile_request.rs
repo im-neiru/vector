@@ -4,7 +4,8 @@ use std::{
 };
 
 use super::{
-    bindings::*, compile_target::SlangCompileTarget,
+    bindings::*, blob::ISlangBlob,
+    compile_target::SlangCompileTarget,
     global_session::IGlobalSessionRef,
     source_language::SlangSourceLanguage,
 };
@@ -21,7 +22,10 @@ pub(crate) struct ICompileRequestRef(NonNull<ICompileRequest>);
 unsafe impl Send for ICompileRequestRef {}
 unsafe impl Sync for ICompileRequestRef {}
 
-pub(crate) struct CompileRequest(pub(super) ICompileRequestRef);
+pub(crate) struct CompileRequest {
+    reference: ICompileRequestRef,
+    target_index: i32,
+}
 
 impl CompileRequest {
     #[inline]
@@ -30,19 +34,24 @@ impl CompileRequest {
             sp_create_compile_request(session).unwrap()
         };
 
-        unsafe {
+        let target_index = unsafe {
             sp_set_code_gen_target(
                 reference,
                 SlangCompileTarget::Spirv,
-            );
-        }
+            )
+        };
 
-        Self(reference)
+        Self {
+            reference,
+            target_index,
+        }
     }
 
     #[inline]
     pub(crate) fn add_search_path(&self, path: &CString) {
-        unsafe { sp_add_search_path(self.0, path.as_ptr()) };
+        unsafe {
+            sp_add_search_path(self.reference, path.as_ptr())
+        };
     }
 
     #[inline]
@@ -52,7 +61,7 @@ impl CompileRequest {
     ) -> u32 {
         unsafe {
             sp_add_translation_unit(
-                self.0,
+                self.reference,
                 SlangSourceLanguage::Slang,
                 module_name.as_ptr(),
             )
@@ -67,7 +76,7 @@ impl CompileRequest {
     ) {
         unsafe {
             sp_add_translation_unit_source_file(
-                self.0,
+                self.reference,
                 translation_unit_index,
                 path.as_ptr(),
             )
@@ -77,9 +86,27 @@ impl CompileRequest {
     #[inline]
     pub(crate) fn compile(&self) {
         unsafe {
-            if sp_compile(self.0).failed() {
+            if sp_compile(self.reference).failed() {
                 panic!("Failed compile")
             }
+
+            let mut blob = None;
+
+            if sp_get_target_code_blob(
+                self.reference,
+                self.target_index,
+                &mut blob,
+            )
+            .failed()
+            {
+                panic!("Failed sp_get_target_code_blob")
+            }
+
+            let blob = blob.unwrap();
+
+            // let slice = blob.as_ref().as_slice();
+
+            // println!("{:?}", blob);
         };
     }
 }
@@ -87,7 +114,7 @@ impl CompileRequest {
 impl Drop for CompileRequest {
     fn drop(&mut self) {
         unsafe {
-            sp_destroy_compile_request(self.0);
+            sp_destroy_compile_request(self.reference);
         }
     }
 }
@@ -97,6 +124,6 @@ impl core::fmt::Debug for CompileRequest {
         &self,
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
-        core::fmt::Debug::fmt(&self.0.0, f)
+        core::fmt::Debug::fmt(&self.reference.0, f)
     }
 }

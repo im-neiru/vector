@@ -1,4 +1,5 @@
 mod bindings;
+mod blob;
 mod compile_request;
 mod compile_target;
 mod global_session;

@@ -1,5 +1,5 @@
 use super::{
-    compile_request::ICompileRequestRef,
+    blob::ISlangBlob, compile_request::ICompileRequestRef,
     compile_target::SlangCompileTarget,
     global_session::IGlobalSessionRef,
     global_session_desc::SlangGlobalSessionDesc,
@@ -52,6 +52,13 @@ unsafe extern "C" {
         translation_unit_index: u32,
         path: *const std::ffi::c_char,
     );
+
+    #[link_name = "spGetTargetCodeBlob"]
+    pub(crate) fn sp_get_target_code_blob(
+        compile_request: ICompileRequestRef,
+        target_index: i32,
+        blob: &mut Option<std::ptr::NonNull<ISlangBlob>>,
+    ) -> SlangResult;
 
     #[link_name = "spCompile"]
     pub(crate) fn sp_compile(
