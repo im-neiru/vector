@@ -88,9 +88,24 @@ impl CompileRequest {
         unsafe {
             if sp_compile(self.reference).failed() {
                 panic!("Failed compile")
-            }
+            };
 
             let mut blob = None;
+
+            if sp_get_entry_point_code_blob(
+                self.reference,
+                0,
+                self.target_index,
+                &mut blob,
+            )
+            .failed()
+            {
+                println!("Failed sp_get_entry_point_code_blob");
+            }
+
+            let blob = blob.unwrap();
+
+            let bytes = blob.as_ref().as_slice();
 
             if let Some(diagnostic) =
                 sp_get_diagnostic_output(self.reference)
@@ -100,27 +115,6 @@ impl CompileRequest {
                     println!("{diagnostic:?}");
                 }
             }
-
-            println!("{}", self.target_index);
-
-            let error = sp_get_target_code_blob(
-                self.reference,
-                self.target_index,
-                &mut blob,
-            );
-
-            if error.failed() {
-                panic!(
-                    "Failed sp_get_target_code_blob: {error} {}",
-                    self.target_index
-                )
-            }
-
-            let blob = blob.unwrap();
-
-            // let slice = blob.as_ref().as_slice();
-
-            // println!("{:?}", blob);
         };
     }
 }

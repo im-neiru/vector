@@ -67,6 +67,14 @@ unsafe extern "C" {
         compile_request: ICompileRequestRef,
     ) -> Option<NonNull<std::ffi::c_char>>;
 
+    #[link_name = "spGetEntryPointCodeBlob"]
+    pub(crate) fn sp_get_entry_point_code_blob(
+        compile_request: ICompileRequestRef,
+        entry_point_index: u32,
+        target_index: i32,
+        blob: &mut Option<std::ptr::NonNull<ISlangBlob>>,
+    ) -> SlangResult;
+
     #[link_name = "spCompile"]
     pub(crate) fn sp_compile(
         compile_request: ICompileRequestRef,
