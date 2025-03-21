@@ -5,6 +5,7 @@ mod compile_target;
 mod global_session;
 mod global_session_desc;
 mod instance;
+mod reflect;
 mod result;
 mod source_language;
 

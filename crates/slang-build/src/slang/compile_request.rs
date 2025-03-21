@@ -89,6 +89,18 @@ impl CompileRequest {
                 panic!("Failed compile")
             };
 
+            if let Some(diagnostic) =
+                sp_get_diagnostic_output(self.reference)
+                    .map(|v| CStr::from_ptr(v.as_ptr()))
+            {
+                if !diagnostic.is_empty() {
+                    println!("{diagnostic:?}");
+                }
+            }
+
+            let reflection =
+                sp_get_reflection(self.reference).unwrap();
+
             let mut blob = None;
 
             if sp_get_entry_point_code_blob(

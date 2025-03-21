@@ -5,7 +5,8 @@ use super::{
     compile_target::SlangCompileTarget,
     global_session::IGlobalSessionRef,
     global_session_desc::SlangGlobalSessionDesc,
-    result::SlangResult, source_language::SlangSourceLanguage,
+    reflect::SlangReflectionRef, result::SlangResult,
+    source_language::SlangSourceLanguage,
 };
 
 #[link(name = "slang")]
@@ -55,13 +56,6 @@ unsafe extern "C" {
         path: *const std::ffi::c_char,
     );
 
-    #[link_name = "spGetTargetCodeBlob"]
-    pub(crate) fn sp_get_target_code_blob(
-        compile_request: ICompileRequestRef,
-        target_index: i32,
-        blob: &mut Option<std::ptr::NonNull<ISlangBlob>>,
-    ) -> SlangResult;
-
     #[link_name = "spGetDiagnosticOutput"]
     pub(crate) fn sp_get_diagnostic_output(
         compile_request: ICompileRequestRef,
@@ -79,4 +73,9 @@ unsafe extern "C" {
     pub(crate) fn sp_compile(
         compile_request: ICompileRequestRef,
     ) -> SlangResult;
+
+    #[link_name = "spGetReflection"]
+    pub(crate) fn sp_get_reflection(
+        compile_request: ICompileRequestRef,
+    ) -> Option<SlangReflectionRef>;
 }
