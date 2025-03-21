@@ -17,7 +17,8 @@ cbuffer EmitQuadUvBlock
 
 struct VsInput
 {
-    [[vk::location(0)]] float2 in_position : POSITION;
+    [[vk::location(0)]]
+    float2 in_position : POSITION;
 };
 
 [shader("vertex")]
@@ -26,7 +27,6 @@ VertexWithUv quad_emit_uv(VsInput input)
     VertexWithUv output;
 
     float3 local_position = mul(float3(input.in_position, z), transform);
-
 
     local_position.z = local_position.z / 1024.0f + 0.5f;
 

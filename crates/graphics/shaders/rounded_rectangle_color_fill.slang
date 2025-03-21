@@ -1,3 +1,4 @@
+#include "common/utils.slang"
 #include "common/vertex_with_uv.slang"
 
 struct RoundedRectangleColorFill
@@ -49,19 +50,14 @@ float3 pseudo_msdf(float2 uv)
     return float3(sdf_r, sdf_g, sdf_b);
 }
 
-float median(float3 s)
-{
-    return max(min(s.r, s.g), min(max(s.r, s.g), s.b));
-}
+const float ANTI_ALIAS_FACTOR = 0.6;
 
 [shader("fragment")]
-float4 rounded_rectangle_color_fill(VertexWithUv input) : SV_Target0
+float4 rounded_rectangle_color_fill(VertexWithUv input)
+    : SV_Target0
 {
-    float anti_alias_factor = 0.6;
-    float3 msdf_values = pseudo_msdf(input.uv);
-    float signed_distance = median(msdf_values);
-    float smoothing_threshold = fwidth(signed_distance) * anti_alias_factor;
-    float alpha = 1.0 - smoothstep(-smoothing_threshold, smoothing_threshold, signed_distance);
+    float3 msdf = pseudo_msdf(input.uv);
+    float alpha = msdf_alpha(msdf, ANTI_ALIAS_FACTOR);
 
     return float4(inputs.color.rgb, inputs.color.a * alpha);
 }
